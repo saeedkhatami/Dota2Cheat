@@ -198,7 +198,7 @@ namespace Hooks {
 								Vector3 radius{ static_cast<float>(UIState::isVisibleRadius), 255, 0 };
 
 								auto particle = Globals::ParticleManager->CreateParticle(
-									"particles/ui_mouseactions/selected_ring.vpcf",
+									"particles/ui_mouseactions/selected_ring.vpcf", //"particles/items5_fx/revenant_brooch_ring_glow.vpcf"
 									CDOTAParticleManager::ParticleAttachment_t::PATTACH_ABSORIGIN_FOLLOW,
 									(BaseEntity*)assignedHero,
 									TRACKED_PARTICLE_VBE
