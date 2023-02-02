@@ -194,13 +194,19 @@ namespace Hooks {
 						bool vbeParticleActive = CDOTAParticleManager::TrackedParticles[TRACKED_PARTICLE_VBE].particle != nullptr;
 						if (visible) {
 							if (!vbeParticleActive && Config::VBEShowParticle) {
-								Globals::ParticleManager->CreateParticle(
-									"particles/items5_fx/revenant_brooch_ring_glow.vpcf",
+								Vector3 color = UIState::CircleVisibleColor;
+								Vector3 radius{ static_cast<float>(UIState::isVisibleRadius), 255, 0 };
+
+								auto particle = Globals::ParticleManager->CreateParticle(
+									"particles/ui_mouseactions/selected_ring.vpcf",
 									CDOTAParticleManager::ParticleAttachment_t::PATTACH_ABSORIGIN_FOLLOW,
 									(BaseEntity*)assignedHero,
 									TRACKED_PARTICLE_VBE
 								).particle
-									->SetControlPoint(0, &Vector3::Zero);
+									//	->SetControlPoint(0, &Vector3::Zero);
+									->SetControlPoint(1, &color)
+									->SetControlPoint(2, &radius)
+									->SetControlPoint(3, &Vector3::Zero);
 							}
 						}
 						if ((!visible && vbeParticleActive) || // if not visible and there's a particle

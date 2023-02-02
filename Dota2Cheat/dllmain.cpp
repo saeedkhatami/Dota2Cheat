@@ -243,7 +243,7 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 			if (ImGui::Button("Features"))
 				featuresMenuVisible = !featuresMenuVisible;
 
-			ImGui::InputInt("Circle radius", &UIState::CircleRadius, 1, 10);
+			ImGui::SliderInt("Circle radius", &UIState::CircleRadius, 50, 2200, "%d");
 			ImGui::ColorEdit3("Circle RGB", &UIState::CircleRGB.x);
 			
 			if (ImGui::Button("Draw circle")) {
@@ -298,8 +298,6 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 			glfwSetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH, menuVisible);
 			menuVisible = !menuVisible;
 		}
-
-
 
 		// Rendering
 		ImGui::Render();
