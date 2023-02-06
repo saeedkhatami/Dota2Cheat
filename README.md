@@ -1,7 +1,8 @@
 # Dota2Cheat: now with ImGui!
 SDK folder code is from another github repo, McDota by LWSS. It's a very helpful source regarding memory structures
 
-Also using GLFW, GLEW and ImGui for the interface, cheers to their wonderful creators!
+Using GLFW, GLEW and ImGui for the interface, cheers to their wonderful creators!
+also using Minhook for bytehooking
 ## Building
 Open the project in Visual Studio and build as **Release x64**
 ## Injecting
@@ -18,11 +19,12 @@ This list is subject to frequent change as I'm testing new features
   * Bounty rune pickup
   * Tome of Knowledge purchase
   * Redirects spell casts from illusions to the real hero
-  
+  * Mana & HP abuse with items like Arcane Boots
 * Information:
   * Visible by Enemy — shows a Skyrim-inspired HIDDEN/DETECTED text and/or a particle under your hero
   * Roshan — saves his death time and approximates when he will spawn [WIP]
   * Draw circles of custom radius(e. g. to see XP receiving range)
+  * Highlights enemy sun strikes as if they were yours
 
 * Convars:
   * `sv_cheats` spoofing
@@ -31,5 +33,8 @@ This list is subject to frequent change as I'm testing new features
 
 * Utility:
   * Bypasses Blink Dagger's overshoot which normally makes you only blink for 1000 units if clicked out of its casting range
+
+* Visuals:
+  * Weather changing(Ash, Spring etc)
 
 I intend to implement most of the usual cheat functionality
