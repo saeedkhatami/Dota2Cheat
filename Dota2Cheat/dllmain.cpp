@@ -177,7 +177,7 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 	const char* glsl_version = "#version 130";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 0);
 
 #ifndef _DEBUG // wouldn't want the window to obscure the screen on a breakpoint
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
@@ -186,7 +186,6 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 	glfwWindowHint(GLFW_MAXIMIZED, 1);
 	glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, 1);
-	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 #endif // DEBUG
 
 	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
