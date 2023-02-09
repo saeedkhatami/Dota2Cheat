@@ -72,6 +72,12 @@
     <ClCompile Include="CDOTAParticleManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_dx11.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_win32.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vtabler.h">
@@ -161,20 +167,38 @@
     <ClInclude Include="AutolastHit.h">
       <Filter>Header files\Hacks</Filter>
     </ClInclude>
-    <ClInclude Include="CGameEventManager.h">
-      <Filter>Файлы заголовков\Interfaces</Filter>
+    <ClInclude Include="CBaseFileSystem.h">
+      <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="EventListeners.h">
-      <Filter>Файлы заголовков\Interfaces</Filter>
+    <ClInclude Include="CGameEventManager.h">
+      <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="CInputService.h">
-      <Filter>Файлы заголовков\Interfaces</Filter>
+      <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="CBaseFileSystem.h">
-      <Filter>Файлы заголовков\Interfaces</Filter>
+    <ClInclude Include="EventListeners.h">
+      <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="SunStrikeHighlighter.h">
-      <Filter>Файлы заголовков\Hacks</Filter>
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_dx11.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_win32.h">
+      <Filter>Source Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\D3DX11.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\D3DX11async.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\D3DX11core.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\D3DX11tex.h">
+      <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

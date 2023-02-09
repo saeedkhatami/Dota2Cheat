@@ -160,6 +160,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="CDOTAParticleManager.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="include\imgui\imgui.cpp" />
@@ -179,6 +181,8 @@
     <ClCompile Include="proc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_win32.h" />
     <ClInclude Include="AbilityCooldownTracking.h" />
     <ClInclude Include="AutoBuyTome.h" />
     <ClInclude Include="AutolastHit.h" />
@@ -192,6 +196,10 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="EventListeners.h" />
     <ClInclude Include="Hooks.h" />
+    <ClInclude Include="include\D3DX11.h" />
+    <ClInclude Include="include\D3DX11async.h" />
+    <ClInclude Include="include\D3DX11core.h" />
+    <ClInclude Include="include\D3DX11tex.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="IScriptVM.h" />
     <ClInclude Include="SunStrikeHighlighter.h" />

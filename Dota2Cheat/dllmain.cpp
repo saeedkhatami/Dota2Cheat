@@ -11,7 +11,6 @@
 #include "Hooks.h"
 #include "Input.h"
 #include "UIState.h"
-
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
@@ -19,7 +18,6 @@
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 #include <sstream>
 #include "Config.h"
-
 
 
 #pragma region Global variables
