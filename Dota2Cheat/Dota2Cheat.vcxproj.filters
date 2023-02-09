@@ -1,10 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source files">
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Source files\imgui">
+      <UniqueIdentifier>{a7bcb7cb-3760-42c2-9260-76329d21199e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files">
     <Filter Include="Source Files\imgui">
       <UniqueIdentifier>{a7bcb7cb-3760-42c2-9260-76329d21199e}</UniqueIdentifier>
     </Filter>
@@ -37,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
+      <Filter>Source files</Filter>
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
@@ -49,27 +59,35 @@
       <Filter>Header files\SigScan</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui\imgui.cpp">
+      <Filter>Source files\imgui</Filter>
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_demo.cpp">
+      <Filter>Source files\imgui</Filter>
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_draw.cpp">
+      <Filter>Source files\imgui</Filter>
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_impl_glfw.cpp">
+      <Filter>Source files\imgui</Filter>
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_impl_opengl3.cpp">
+      <Filter>Source files\imgui</Filter>
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_tables.cpp">
+      <Filter>Source files\imgui</Filter>
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_widgets.cpp">
+      <Filter>Source files\imgui</Filter>
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
     <ClCompile Include="CDOTAParticleManager.cpp">
+      <Filter>Source files</Filter>
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_dx11.cpp">
@@ -163,6 +181,7 @@
     </ClInclude>
     <ClInclude Include="include.h">
       <Filter>Header files</Filter>
+      <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="AutolastHit.h">
       <Filter>Header files\Hacks</Filter>
@@ -171,6 +190,7 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="CGameEventManager.h">
+      <Filter>Header files\Interfaces</Filter>
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="CInputService.h">
@@ -191,12 +211,30 @@
     <ClInclude Include="include\D3DX11.h">
       <Filter>Header files</Filter>
     </ClInclude>
+    <ClInclude Include="CInputService.h">
+      <Filter>Header files\Interfaces</Filter>
     <ClInclude Include="include\D3DX11async.h">
       <Filter>Header files</Filter>
     </ClInclude>
+    <ClInclude Include="CBaseFileSystem.h">
+      <Filter>Header files\Interfaces</Filter>
     <ClInclude Include="include\D3DX11core.h">
       <Filter>Header files</Filter>
     </ClInclude>
+    <ClInclude Include="SunStrikeHighlighter.h">
+      <Filter>Header files\Hacks</Filter>
+    </ClInclude>
+    <ClInclude Include="SpiritBreakerChargeHighlighter.h">
+      <Filter>Header files\Hacks</Filter>
+    </ClInclude>
+    <ClInclude Include="EventListeners.h">
+      <Filter>Header files\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="VBE.h">
+      <Filter>Header files\Hacks</Filter>
+    </ClInclude>
+    <ClInclude Include="IllusionColoring.h">
+      <Filter>Header files\Hacks</Filter>
     <ClInclude Include="include\D3DX11tex.h">
       <Filter>Header files</Filter>
     </ClInclude>

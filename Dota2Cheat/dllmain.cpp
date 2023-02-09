@@ -18,6 +18,7 @@
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 #include <sstream>
 #include "Config.h"
+#include "DebugFunctions.h"
 
 
 #pragma region Global variables
@@ -36,13 +37,14 @@ HANDLE CurProcHandle;
 int CurProcId;
 #pragma endregion
 
-void gotoxy(int x, int y)
-{
-	COORD coord;
-	coord.X = x;
-	coord.Y = y;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
+
+//void gotoxy(int x, int y)
+//{
+//	COORD coord;
+//	coord.X = x;
+//	coord.Y = y;
+//	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+//}
 
 
 static void glfw_error_callback(int error, const char* description)
@@ -229,7 +231,6 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-
 		if (menuVisible) {
 			ImGui::Begin("Main");
 			if (ImGui::Button("Features"))
@@ -259,9 +260,29 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 
 			ImGui::End();
 
+#ifdef _DEBUG
+			ImGui::Begin("Debug functions", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+			
+			if (ImGui::Button("Log Inventory")) {
+				auto selected = localPlayer->GetSelectedUnits();
+				auto ent = (BaseNpc*)Interfaces::EntitySystem->GetEntity(selected[0]);
+				LogInvAndAbilities(ent);
+			}
+
+			if (ImGui::Button("Log Modifiers")) {
+				auto selected = localPlayer->GetSelectedUnits();
+				auto ent = (BaseNpc*)Interfaces::EntitySystem->GetEntity(selected[0]);
+				LogModifiers(ent);
+			}
+
+			ImGui::End();
+#endif // _DEBUG
+
+
 			if (featuresMenuVisible) {
 				ImGui::Begin("Features", &featuresMenuVisible, ImGuiWindowFlags_::ImGuiWindowFlags_AlwaysAutoResize);
-				if (ImGui::Button("Draw circle around hero"))
+				
+				if (ImGui::Button("Circle drawing"))
 					circleMenuVisible = !circleMenuVisible;
 
 				// https://github.com/SK68-ph/Shadow-Dance-Menu
@@ -280,6 +301,9 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 					ImGui::Checkbox("Show HIDDEN/DETECTED text", &Config::VBEShowText);
 					ImGui::Checkbox("Show a circle under the hero when visible", &Config::VBEShowParticle);
 				}
+				if (ImGui::CollapsingHeader("Illusion coloring")) {
+					ImGui::ColorEdit3("Color", &Config::IllusionColor.x);
+				}
 				if (ImGui::CollapsingHeader("AutoWand")) {
 					ImGui::Checkbox("Auto-use Faerie Fire and Magic Stick", &Config::AutoWandEnabled);
 					ImGui::SliderFloat("Faerie Fire HP Treshold", &Config::AutoHealFaerieFireHPTreshold, 0, 100, "%.1f");
@@ -290,7 +314,7 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 					ImGui::SliderInt("Minimum charges", &Config::AutoHealWandMinCharges, 1, 20);
 				}
 				ImGui::Checkbox("Auto-buy Tome of Knowledge", &Config::AutoBuyTome);
-				ImGui::SliderFloat("Camera distance", &Config::CameraDistance, 1000, 2200, "%.1f");
+				ImGui::SliderFloat("Camera distance", &Config::CameraDistance, 1200, 3000, "%.1f");
 
 				ImGui::End();
 
@@ -347,20 +371,15 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 	glfwDestroyWindow(window);
 	glfwTerminate();
 
-	for (auto& pair : CDOTAParticleManager::TrackedParticles) {
-		if (Globals::ParticleManager)
-			Globals::ParticleManager->DestroyParticle(pair.second);
-	}
-
 	if (IsInMatch) {
-
-		CDOTAParticleManager::TrackedParticles.clear();
+		Modules::VBE.Reset();
 		if (Globals::GameEventManager)
 			for (auto& listener : CGameEventManager::EventListeners)
 				Globals::GameEventManager->RemoveListener(listener.get());
 		CGameEventManager::EventListeners.clear();
 		CVarSystem::CVar.clear();
 	}
+
 	Schema::Netvars.clear();
 
 	MH_Uninitialize();

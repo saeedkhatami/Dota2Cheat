@@ -2,12 +2,13 @@
 
 namespace Config {
 	inline bool AutoMidasEnabled = true;
+
 	inline bool AutoLastHit = true;
 	
 	inline bool AutoRunePickupEnabled = true;
 
 	inline bool AutoBuyTome = false;
-	
+
 	inline bool AutoWandEnabled = true;
 	inline float AutoHealWandHPTreshold = 10.0f;
 	inline int AutoHealWandMinCharges = 5;
@@ -16,7 +17,8 @@ namespace Config {
 	inline int WeatherListIdx = 0;
 
 	inline float CameraDistance = 1200.0f;
-	
+
+	inline Vector3 IllusionColor{ 1,0,0 };
 
 	inline int CircleRadius = 1200;
 	inline Vector3 CircleRGB{ 0,0,0 };
@@ -24,7 +26,7 @@ namespace Config {
 	inline bool VBEShowText = true;
 	inline bool VBEShowParticle = true;
 
-	inline int OffsetX = 0; 
-	inline int OffsetY = 0;
-	inline int OffsetZ = 0;
+	//inline int OffsetX = 0; 
+	//inline int OffsetY = 0;
+	//inline int OffsetZ = 0;
 }

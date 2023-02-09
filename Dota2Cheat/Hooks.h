@@ -13,11 +13,16 @@
 #include <future>
 #include <algorithm>
 #include <optional>
+
+#include "SpiritBreakerChargeHighlighter.h"
 #include "SunStrikeHighlighter.h"
+#include "VBE.h"
+#include "IllusionColoring.h"
 
 extern bool IsInMatch;
 extern std::vector<BaseNpc*> enemyHeroes;
 extern CDOTAParticleManager::ParticleWrapper particleWrap;
+
 
 namespace VMTs {
 	inline std::unique_ptr<VMT> UIEngine = nullptr;
@@ -49,41 +54,7 @@ namespace Hooks {
 		return vec;
 	};
 
-	inline void LogEntities() {
-		for (int i = 0; i < Interfaces::EntitySystem->GetHighestEntityIndex(); i++) {
-			auto* ent = Interfaces::EntitySystem->GetEntity(i);
-			if (ent == nullptr)
-				continue;
-			//std::cout << ent->SchemaBinding() << '\n';
-			const char* className = ent->SchemaBinding()->binaryName;
-			if (className != nullptr && strstr(className, "Rune"))
-				std::cout << className << ' ' << i
-				//<< " // " << ent->GetPos2D().x << ' ' << ent->GetPos2D().y
-				<< " -> " << ent << '\n';
-		}
-	}
-	inline void LogInvAndAbilities(BaseNpc* npc = nullptr) {
-		if (npc == nullptr)
-			npc = assignedHero;
-
-		std::cout << std::dec;
-		std::cout << "abilities: " << '\n';
-		for (const auto& ability : npc->GetAbilities()) {
-			if (ability.name != nullptr)
-				std::cout << '\t' << ability.name << " " << H2IDX(ability.handle)
-				//<< " CD: " << ability.GetAs<BaseAbility>()->GetCooldown() 
-				//<< ' ' << std::dec << ability.GetAs<BaseAbility>()->GetEffectiveCastRange()
-				<< ' ' << ability.GetEntity()
-				<< '\n';
-		}
-		std::cout << "inventory: " << '\n';
-		for (const auto& item : npc->GetItems()) {
-			if (item.name != nullptr)
-				std::cout << '\t' << item.name << " " << H2IDX(item.handle)
-				<< ' ' << item.GetEntity()
-				<< '\n';
-		}
-	}
+	
 
 	//inline bool test = false;
 	inline void EntityIteration() {
@@ -153,23 +124,8 @@ namespace Hooks {
 						localPlayer->PrepareOrder(DotaUnitOrder_t::DOTA_UNIT_ORDER_PICKUP_RUNE, i, &Vector3::Zero, 0, PlayerOrderIssuer_t::DOTA_ORDER_ISSUER_SELECTED_UNITS, nullptr, false, false);
 				}
 			}
-			else if (strstr(className, "DOTA_Unit_Hero") != nullptr) {
-				auto hero = (BaseNpcHero*)ent;
-				//if (!test) {
-				//	enemyHeroes.push_back(hero);
-				//	test = true;
-				//}
-
-				//std::cout << std::hex;
-
-				if (hero->IsIllusion() &&
-					strstr(className, "CDOTA_Unit_Hero_ArcWarden") == nullptr) {
-					illusionCount++;
-					if (assignedHero->GetTeam() == hero->GetTeam())
-						hero->SetColor(Color(0, 255, 0));
-					else
-						hero->SetColor(Color(255, 0, 0));
-				}
+			else {
+				Modules::IllusionColoring.ColorIfIllusion(ent);
 			}
 
 		}
@@ -178,10 +134,6 @@ namespace Hooks {
 		//gotoxy(0, 5);
 		//std::cout << "Illusions: " << illusionCount;
 	}
-
-	inline float sscCount = 0;
-	inline float sscSum = 0;
-	inline bool visible = false;
 
 	inline void UpdateCameraDistance() {
 		static auto varInfo = CVarSystem::CVar["dota_camera_distance"];
@@ -198,24 +150,20 @@ namespace Hooks {
 	}
 
 	inline void RunFrame(u64 a, u64 b) {
-		const bool inGameStuff = true;
 		static bool isInGame = Interfaces::Engine->IsInGame();
 
 		if (isInGame) {
 			//std::cout << "frame\n";
-			if (inGameStuff && IsInMatch) {
+			if (IsInMatch) {
 
 				UpdateCameraDistance();
 				UpdateWeather();
-				if (Hacks::SunStrikeHighlighter::SunStrikeThinker != nullptr &&
-					Hacks::SunStrikeHighlighter::SunStrikeThinker->GetPos() != Vector3::Zero) {
-					Hacks::SunStrikeHighlighter::DrawEnemySunstrike(Hacks::SunStrikeHighlighter::SunStrikeThinker->GetPos());
+				Modules::SunStrikeHighlighter.FrameBasedLogic();
 
-					Hacks::SunStrikeHighlighter::SunStrikeThinker = nullptr;
-				}
 				if (assignedHero->GetLifeState() == 0) { // if alive
 					// VBE: m_flStartSequenceCycle updates 30 times a second
 					// It doesn't update when you are seen(stays at zero)
+					
 					sscSum += assignedHero->GetSSC();
 					sscCount++;
 					if (sscCount == 3) {
@@ -251,7 +199,9 @@ namespace Hooks {
 
 					AutoUseWandCheck(assignedHero, Config::AutoHealWandHPTreshold, Config::AutoHealWandMinCharges);
 					AutoUseFaerieFireCheck(assignedHero, Config::AutoHealFaerieFireHPTreshold);
-					Hacks::AutoBuyTomeCheck();
+					Modules::AutoBuyTome.FrameBasedLogic();
+					Modules::VBE.FrameBasedLogic();
+					Modules::SBChargeHighlighter.FrameBasedLogic();
 					EntityIteration();
 				}
 #ifdef _DEBUG
@@ -262,19 +212,13 @@ namespace Hooks {
 
 					std::cout << std::dec << "ENT " << selected[0] << " -> " << ent
 						<< "\n\t" << "POS " << pos.x << ' ' << pos.y << ' ' << pos.z
-						<< "\n\t" << clamp(ent->GetBaseAttackTime() / ent->GetAttackSpeed(), 0.24, 2) //Signatures::Scripts::GetAttackSpeed(ent, 4)
-						//<< "\n\t" << 
-						//static_cast<int>(
-						//Function(0x00007FF834CC6E80).Execute<float>(nullptr, H2IDX(ent->GetIdentity()->entHandle))
-						//* 100)
-						//<< "\n\t" << "IsAncient: " << ent->IsAncient()
+						<< "\n\tAttack Time: " << clamp(ent->GetBaseAttackTime() / ent->GetAttackSpeed(), 0.24, 2) 
+						<< "\n\t" << "IsRoshan: " << ent->IsRoshan()
 						//<< "\n\t" << "GetCastRangeBonus: " << std::dec << Function(0x00007FFAEE5C0B00).Execute<int>(nullptr, ent->GetIdentity()->entHandle)
 						<< '\n';
 				}
 				if (IsKeyPressed(VK_NUMPAD7)) {
-					auto selected = localPlayer->GetSelectedUnits();
-					auto ent = (BaseNpc*)Interfaces::EntitySystem->GetEntity(selected[0]);
-					LogInvAndAbilities(ent);
+					//LogInvAndAbilities(ent);
 					//auto ab = ent->GetAbilities()[2];
 					//std::cout << std::dec << selected[0] << " " << std::dec<< ab.name << " " << ab.GetAs<BaseAbility>()->GetCooldown() << '\n';
 					//LogEntities();
@@ -317,13 +261,11 @@ namespace Hooks {
 			if (TestStringFilters(className, { "Item_Physical" }))
 				physicalItems.push_back(ent);
 			else if (TestStringFilters(className, { "BaseNPC" })) {
-
-
 				const char* idName = ent->GetIdentity()->GetName();
-				if (Hacks::SunStrikeHighlighter::SunStrikeIncoming && idName == nullptr) {
-					Hacks::SunStrikeHighlighter::SunStrikeIncoming = false;
-					Hacks::SunStrikeHighlighter::SunStrikeThinker = ent;
-				}
+				if (Modules::SunStrikeHighlighter.SunStrikeIncoming && 
+					idName == nullptr)
+					Modules::SunStrikeHighlighter.QueueThinker(ent);
+				
 			}
 		}
 
@@ -479,11 +421,10 @@ namespace Hooks {
 					->Member<VClass*>(0x18)
 					->Member<ENT_HANDLE>(0x18);
 
-				auto invoker = Interfaces::EntitySystem->GetEntity(H2IDX(handle));
+				auto invoker = Interfaces::EntitySystem->GetEntity(handle & 0x7ff); // weird smaller mask
 				if (invoker != nullptr &&
-					TestStringFilters(invoker->SchemaBinding()->binaryName, { "Hero" }) &&
 					invoker->GetTeam() != assignedHero->GetTeam())
-					Hacks::SunStrikeHighlighter::SunStrikeIncoming = true;
+					Modules::SunStrikeHighlighter.SunStrikeIncoming = true;
 
 			}
 		}

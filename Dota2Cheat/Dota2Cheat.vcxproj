@@ -194,14 +194,17 @@
     <ClInclude Include="CGameEventManager.h" />
     <ClInclude Include="CInputService.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="DebugFunctions.h" />
     <ClInclude Include="EventListeners.h" />
     <ClInclude Include="Hooks.h" />
+    <ClInclude Include="IllusionColoring.h" />
     <ClInclude Include="include\D3DX11.h" />
     <ClInclude Include="include\D3DX11async.h" />
     <ClInclude Include="include\D3DX11core.h" />
     <ClInclude Include="include\D3DX11tex.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="IScriptVM.h" />
+    <ClInclude Include="SpiritBreakerChargeHighlighter.h" />
     <ClInclude Include="SunStrikeHighlighter.h" />
     <ClInclude Include="UIState.h" />
     <ClInclude Include="ValveClasses.h" />
@@ -219,6 +222,7 @@
     <ClInclude Include="proc.h" />
     <ClInclude Include="sdk.h" />
     <ClInclude Include="Signatures.h" />
+    <ClInclude Include="VBE.h" />
     <ClInclude Include="vtabler.h" />
     <ClInclude Include="Wrappers.h" />
   </ItemGroup>
