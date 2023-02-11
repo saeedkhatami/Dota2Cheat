@@ -42,4 +42,4 @@ This list is subject to frequent change as I'm testing new features
   * Weather changing(Ash, Spring etc)
   * Customizable illusion coloring
 
-I intend to implement most of the usual cheat functionality
+I intend to implement most of the usual cheat functionality.
