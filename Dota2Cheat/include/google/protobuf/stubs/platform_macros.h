@@ -46,7 +46,11 @@
 #define GOOGLE_PROTOBUF_ARCH_32_BIT 1
 #elif defined(__QNX__)
 #define GOOGLE_PROTOBUF_ARCH_ARM_QNX 1
+#if defined(__aarch64__)
+#define GOOGLE_PROTOBUF_ARCH_64_BIT 1
+#else
 #define GOOGLE_PROTOBUF_ARCH_32_BIT 1
+#endif
 #elif defined(_M_ARM) || defined(__ARMEL__)
 #define GOOGLE_PROTOBUF_ARCH_ARM 1
 #define GOOGLE_PROTOBUF_ARCH_32_BIT 1
@@ -118,11 +122,11 @@ GOOGLE_PROTOBUF_PLATFORM_ERROR
 
 #undef GOOGLE_PROTOBUF_PLATFORM_ERROR
 
-#if defined(GOOGLE_PROTOBUF_OS_ANDROID) || defined(GOOGLE_PROTOBUF_OS_IPHONE) || defined(__OpenBSD__)
+#if defined(GOOGLE_PROTOBUF_OS_ANDROID) || defined(GOOGLE_PROTOBUF_OS_IPHONE)
 // Android ndk does not support the __thread keyword very well yet. Here
 // we use pthread_key_create()/pthread_getspecific()/... methods for
 // TLS support on android.
-// iOS and OpenBSD also do not support the __thread keyword.
+// iOS also does not support the __thread keyword.
 #define GOOGLE_PROTOBUF_NO_THREADLOCAL
 #endif
 
@@ -130,5 +134,9 @@ GOOGLE_PROTOBUF_PLATFORM_ERROR
 // __thread keyword requires at least 10.7
 #define GOOGLE_PROTOBUF_NO_THREADLOCAL
 #endif
+
+#ifndef PROTOBUF_USE_DLLS
+#define PROTOBUF_USE_DLLS
+#endif // PROTOBUF_USE_DLLS
 
 #endif  // GOOGLE_PROTOBUF_PLATFORM_MACROS_H_

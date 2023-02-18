@@ -7,7 +7,7 @@
 #include "Wrappers.h"
 #include "UIState.h"
 #include "Input.h"
-#include "include/google/protobuf/message.h"
+#include <google/protobuf/message.h>
 #include "SDK/INetChannel.h"
 #include "CDOTAParticleManager.h"
 #include <future>
@@ -19,11 +19,12 @@
 #include "VBE.h"
 #include "IllusionColoring.h"
 #include "AegisAutoPickup.h"
+#include "RiverPaint.h"
+
+#include "AttackTargetFinder.h"
 
 extern bool IsInMatch;
 extern std::vector<BaseNpc*> enemyHeroes;
-extern CDOTAParticleManager::ParticleWrapper particleWrap;
-
 
 namespace VMTs {
 	inline std::unique_ptr<VMT> UIEngine = nullptr;
@@ -34,8 +35,6 @@ namespace VMTs {
 }
 
 namespace Hooks {
-	typedef BaseEntity* (*OnAddEntityFn)(CEntitySystem*, BaseEntity*, ENT_HANDLE);
-	typedef void (*RunFrameFn)(u64, u64);
 
 	template<typename T = BaseEntity>
 	inline std::vector<T*> GetEntitiesByFilter(const std::vector<const char*>& filters) {
@@ -127,13 +126,13 @@ namespace Hooks {
 	}
 	inline void UpdateWeather() {
 		static auto varInfo = CVarSystem::CVar["cl_weather"];
-		if (Config::WeatherListIdx != varInfo.var->value.i32) {
-			varInfo.var->value.i32 = Config::WeatherListIdx;
-		}
+		//if (Config::WeatherListIdx != varInfo.var->value.i32) {
+		varInfo.var->value.i32 = Config::WeatherListIdx;
+		//}
 	}
 
-	inline void RunFrame(u64 a, u64 b) {
-		static bool isInGame = Interfaces::Engine->IsInGame();
+	inline void hkRunFrame(u64 a, u64 b) {
+		bool isInGame = Interfaces::Engine->IsInGame();
 
 		if (isInGame) {
 			//std::cout << "frame\n";
@@ -153,6 +152,7 @@ namespace Hooks {
 					Modules::AutoBuyTome.FrameBasedLogic();
 					Modules::VBE.FrameBasedLogic();
 					Modules::SBChargeHighlighter.FrameBasedLogic();
+					Modules::RiverPaint.FrameBasedLogic();
 
 					EntityIteration();
 				}
@@ -165,8 +165,9 @@ namespace Hooks {
 					std::cout << std::dec << "ENT " << selected[0] << " -> " << ent
 						<< "\n\t" << "POS " << pos.x << ' ' << pos.y << ' ' << pos.z
 						<< "\n\tAttack Time: " << clamp(ent->GetBaseAttackTime() / ent->GetAttackSpeed(), 0.24, 2)
-						<< "\n\t" << "IsRoshan: " << ent->IsRoshan()
-						//<< "\n\t" << "GetCastRangeBonus: " << std::dec << Function(0x00007FFAEE5C0B00).Execute<int>(nullptr, ent->GetIdentity()->entHandle)
+						
+						//<< "\n\tIsRoshan: " << ent->IsRoshan()
+						<< "\n\t" << AttackTargetFinder::GetAttackTarget(ent)
 						<< '\n';
 				}
 				if (IsKeyPressed(VK_NUMPAD7)) {
@@ -184,7 +185,7 @@ namespace Hooks {
 					for (auto& ent : vec) {
 						const char* className = ent->SchemaBinding()->binaryName;
 						std::cout << className << ' ' << std::dec << H2IDX(ent->GetIdentity()->entHandle)
-							<< std::hex << " -> " << ent << '\n';
+							<< " -> " << ent << '\n';
 					}
 					//auto midas = assignedHero->FindItemBySubstring("blink");
 					//if (HVALID(midas.handle))
@@ -204,7 +205,7 @@ namespace Hooks {
 #endif
 			}
 		}
-		VMTs::UIEngine->GetOriginalMethod<RunFrameFn>(6)(a, b);
+		VMTs::UIEngine->GetOriginalMethod<decltype(&hkRunFrame)>(6)(a, b);
 	}
 
 	inline BaseEntity* OnAddEntity(CEntitySystem* thisptr, BaseEntity* ent, ENT_HANDLE handle) {
@@ -222,13 +223,14 @@ namespace Hooks {
 			}
 		}
 
-		return VMTs::Entity->GetOriginalMethod<OnAddEntityFn>(14)(thisptr, ent, handle);
+		
+		return VMTs::Entity->GetOriginalMethod<decltype(&OnAddEntity)>(14)(thisptr, ent, handle);
 	};
 	inline BaseEntity* OnRemoveEntity(CEntitySystem* thisptr, BaseEntity* ent, ENT_HANDLE handle) {
 		auto iter = std::find(physicalItems.begin(), physicalItems.end(), ent);
 		if (iter != physicalItems.end())
 			physicalItems.erase(iter);
-		return VMTs::Entity->GetOriginalMethod<OnAddEntityFn>(15)(thisptr, ent, handle);
+		return VMTs::Entity->GetOriginalMethod<decltype(&OnAddEntity)>(15)(thisptr, ent, handle);
 	}
 
 	// for MinHook
@@ -378,34 +380,19 @@ namespace Hooks {
 		return DispatchPacketOriginal(thisptr, netPacket);
 	};
 
-	typedef void (*PostReceivedNetMessageFn)(INetChannel*, NetMessageHandle_t*, google::protobuf::Message*, void const*, int);
 	inline void hkPostReceivedNetMessage(INetChannel* thisptr, NetMessageHandle_t* messageHandle, google::protobuf::Message* msg, void const* type, int bits) {
-
 		NetMessageInfo_t* info = Interfaces::NetworkMessages->GetNetMessageInfo(messageHandle);
 		const char* name = info->pProtobufBinding->GetName();
-		if (messageHandle->messageID == 586) { // CDOTAEntityMsg_InvokerSpellCast
-			int castActivity = reinterpret_cast<VClass*>(msg)->Member<int>(0x20);
+		
+		Modules::SunStrikeHighlighter.ProcessMessage(messageHandle, msg);
+		//Modules::AutoDodge.ProcessMessage(messageHandle, msg);
 
-			if (castActivity == 1743) { //sunstrike
-				ENT_HANDLE handle = reinterpret_cast<VClass*>(msg)
-					->Member<VClass*>(0x18)
-					->Member<ENT_HANDLE>(0x18);
-
-				auto invoker = Interfaces::EntitySystem->GetEntity(handle & 0x3fff); // weird smaller mask
-				if (invoker != nullptr &&
-					invoker->GetTeam() != assignedHero->GetTeam())
-					Modules::SunStrikeHighlighter.SunStrikeIncoming = true;
-
-			}
-		}
-
-		return VMTs::NetChannel->GetOriginalMethod<PostReceivedNetMessageFn>(86)(thisptr, messageHandle, msg, type, bits);
+		return VMTs::NetChannel->GetOriginalMethod<decltype(&hkPostReceivedNetMessage)>(86)(thisptr, messageHandle, msg, type, bits);
 	}
 
-	typedef void* (*CreateNetChannelFn)(void*, int, void*, const char*, unsigned int, unsigned int);
 	inline void* CreateNetChannel(void* thisptr, int unk, void* ns_addr, const char* str, unsigned int uUnk, unsigned int uUnk2) {
 		VMTs::NetChannel.reset();
-		void* ret = VMTs::NetworkSystem->GetOriginalMethod<CreateNetChannelFn>(26)(thisptr, unk, ns_addr, str, uUnk, uUnk2);
+		void* ret = VMTs::NetworkSystem->GetOriginalMethod<decltype(&CreateNetChannel)>(26)(thisptr, unk, ns_addr, str, uUnk, uUnk2);
 
 		VMTs::NetChannel = std::unique_ptr<VMT>(new VMT(ret));
 		//VMTs::NetChannel->HookVM(SendNetMessage, 70);
