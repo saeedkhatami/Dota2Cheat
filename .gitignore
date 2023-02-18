@@ -364,3 +364,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /Build
+/Build/settings.xml
+/Build/Extreme Injector v3.exe
+/Build/Dota2Cheat.dll

@@ -3,6 +3,8 @@
 namespace Config {
 	inline bool AutoMidasEnabled = true;
 
+	inline bool AutoLastHit = true;
+	
 	inline bool AutoRunePickupEnabled = true;
 
 	inline bool AutoBuyTome = false;

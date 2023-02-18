@@ -11,4 +11,9 @@ namespace UIState {
 	inline const char* RiverList[] = { "Default", "Chrome", "Dry", "Slime", "Oil", "Electric", "Potion", "Blood"};
 	inline bool HeroVisibleToEnemy = false;
 
+	inline int CircleRadius = 1200;
+	inline Vector3 CircleRGB{0,0,0};
+
+	inline int isVisibleRadius = 75; // small circle around the hero
+	inline Vector3 CircleVisibleColor = { 255,0,0 }; // red color
 }

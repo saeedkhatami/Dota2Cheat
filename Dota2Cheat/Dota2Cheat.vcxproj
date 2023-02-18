@@ -177,6 +177,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="CDOTAParticleManager.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="include\imgui\imgui.cpp" />
@@ -197,11 +199,14 @@
     <ClCompile Include="proc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="..\..\Shadow-Dance-Panda\Shadow Dance Menu\imgui\imgui_impl_win32.h" />
     <ClInclude Include="AbilityCooldownTracking.h" />
     <ClInclude Include="AegisAutoPickup.h" />
     <ClInclude Include="ArmletAbuse.h" />
     <ClInclude Include="AttackTargetFinder.h" />
     <ClInclude Include="AutoBuyTome.h" />
+    <ClInclude Include="AutolastHit.h" />
     <ClInclude Include="AutoUseMagicWand.h" />
     <ClInclude Include="AutoUseMidas.h" />
     <ClInclude Include="CBaseFileSystem.h" />
@@ -216,6 +221,10 @@
     <ClInclude Include="EventListeners.h" />
     <ClInclude Include="Hooks.h" />
     <ClInclude Include="IllusionColoring.h" />
+    <ClInclude Include="include\D3DX11.h" />
+    <ClInclude Include="include\D3DX11async.h" />
+    <ClInclude Include="include\D3DX11core.h" />
+    <ClInclude Include="include\D3DX11tex.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="IScriptVM.h" />
     <ClInclude Include="Messages\messages.pb.h" />

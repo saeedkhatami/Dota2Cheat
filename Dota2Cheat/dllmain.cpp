@@ -1,4 +1,4 @@
-﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
+﻿// dllmain.cpp : Specifies the entry point for a DLL application.
 #pragma once
 #include "pch.h"
 #include <cstdio>
@@ -11,7 +11,6 @@
 #include "Hooks.h"
 #include "Input.h"
 #include "UIState.h"
-
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
@@ -22,7 +21,6 @@
 #include "DebugFunctions.h"
 
 #include "Drawing.h"
-
 
 
 #pragma region Global variables
@@ -88,6 +86,7 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 	Interfaces::CVar->DumpConVarsToMap();
 
 	Schema::SchemaDumpToMap("client.dll", "C_DOTA_BaseNPC_Hero");
+	Schema::SchemaDumpToMap("client.dll", "C_DOTA_BaseNPC_Creep_Lane");
 	Schema::SchemaDumpToMap("client.dll", "C_DOTAPlayerController");
 	Schema::SchemaDumpToMap("client.dll", "C_DOTA_UnitInventory");
 
@@ -122,6 +121,7 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 	const char* glsl_version = "#version 130";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 0);
 
 #ifndef _DEBUG // wouldn't want the window to obscure the screen on a breakpoint
 	glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, 1);
@@ -190,6 +190,24 @@ uintptr_t WINAPI HackThread(HMODULE hModule) {
 			if (ImGui::Button("Features"))
 				featuresMenuVisible = !featuresMenuVisible;
 
+
+			ImGui::SliderInt("Circle radius", &UIState::CircleRadius, 50, 2200, "%d");
+			ImGui::ColorEdit3("Circle RGB", &UIState::CircleRGB.x);
+			
+			if (ImGui::Button("Draw circle")) {
+				Vector3 color = UIState::CircleRGB * 255;
+				Vector3 radius{ static_cast<float>(UIState::CircleRadius), 255, 0 };
+
+				auto particle = Globals::ParticleManager->CreateParticle(
+					"particles/ui_mouseactions/selected_ring.vpcf",
+					CDOTAParticleManager::ParticleAttachment_t::PATTACH_ABSORIGIN_FOLLOW,
+					(BaseEntity*)assignedHero
+				).particle
+				//	->SetControlPoint(0, &Vector3::Zero);
+					->SetControlPoint(1, &color)
+					->SetControlPoint(2, &radius)
+					->SetControlPoint(3, &Vector3::Zero);
+			}
 
 			if (ImGui::Button("EXIT", ImVec2(0, 50)))
 				glfwSetWindowShouldClose(window, 1);

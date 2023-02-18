@@ -145,7 +145,39 @@ namespace Hooks {
 				if (assignedHero->GetLifeState() == 0) { // if alive
 					// VBE: m_flStartSequenceCycle updates 30 times a second
 					// It doesn't update when you are seen(stays at zero)
+					
+					sscSum += assignedHero->GetSSC();
+					sscCount++;
+					if (sscCount == 3) {
+						UIState::HeroVisibleToEnemy = visible = sscSum == 0;
+						sscCount = sscSum = 0;
+					}
 
+					{
+						bool vbeParticleActive = CDOTAParticleManager::TrackedParticles[TRACKED_PARTICLE_VBE].particle != nullptr;
+						if (visible) {
+							if (!vbeParticleActive && Config::VBEShowParticle) {
+								Vector3 color = UIState::CircleVisibleColor;
+								Vector3 radius{ static_cast<float>(UIState::isVisibleRadius), 255, 0 };
+
+								auto particle = Globals::ParticleManager->CreateParticle(
+									"particles/ui_mouseactions/selected_ring.vpcf", //"particles/items5_fx/revenant_brooch_ring_glow.vpcf"
+									CDOTAParticleManager::ParticleAttachment_t::PATTACH_ABSORIGIN_FOLLOW,
+									(BaseEntity*)assignedHero,
+									TRACKED_PARTICLE_VBE
+								).particle
+									//	->SetControlPoint(0, &Vector3::Zero);
+									->SetControlPoint(1, &color)
+									->SetControlPoint(2, &radius)
+									->SetControlPoint(3, &Vector3::Zero);
+							}
+						}
+						if ((!visible && vbeParticleActive) || // if not visible and there's a particle
+							(!Config::VBEShowParticle && CDOTAParticleManager::TrackedParticles[ // if the particle was disabled via config
+								TRACKED_PARTICLE_VBE
+							].particle))
+							Globals::ParticleManager->DestroyTrackedParticle(TRACKED_PARTICLE_VBE);
+					}
 
 					AutoUseWandCheck(assignedHero, Config::AutoHealWandHPTreshold, Config::AutoHealWandMinCharges);
 					AutoUseFaerieFireCheck(assignedHero, Config::AutoHealFaerieFireHPTreshold);
@@ -349,7 +381,7 @@ namespace Hooks {
 				}
 			}
 			if (callPickup)
-				// Multhithreading magic — who knows when the hero finishes dropping the items?
+				// Multhithreading magic Â— who knows when the hero finishes dropping the items?
 				manaAbusePickup = std::async(std::launch::async, [&, player, issuer]() mutable {
 				Sleep(300);
 			for (auto& item : physicalItems) { // wtf is with this indentation???
