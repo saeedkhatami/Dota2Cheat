@@ -1,5 +1,7 @@
 # Dota2Cheat: 
 
+## Maybe I will update this repository some time, but for now I will archive it
+
 Last updated for 7.34c and adjacent patches
 
 Full functionality not guaranteed.
