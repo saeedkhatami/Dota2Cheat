@@ -15,8 +15,9 @@
 
 void CCheatManager::LoadGameSpecific() {
 	// Allows VPK mods
-	if (auto gi = Memory::Scan("74 ? 84 C9 75 ? 83 BF", "client.dll"))
-		Memory::Patch(gi, { 0xEB });
+	// IDK what became of that piece of code
+	//if (auto gi = Memory::Scan("74 ? 84 C9 75 ? 83 BF", "client.dll"))
+	//	Memory::Patch(gi, { 0xEB });
 
 	// Disables gameoverlayrenderer64's WINAPI hook checks
 	if (auto enableVACHooks = Memory::Scan("75 04 84 DB", "gameoverlayrenderer64.dll"))
@@ -32,7 +33,7 @@ void CCheatManager::LoadGameSpecific() {
 	Interfaces::CVar->UnlockHiddenConVars();
 #endif
 
-	// Log(LP_WARNING, "dota_camera_distance: ", (void*)Interfaces::CVar->CVars["dota_camera_distance"].m_pVar);
+#ifndef _DEBUG
 	Modules::CVarSpoofer.SpoofVars(
 		"dota_camera_distance",
 		"r_farz",
@@ -41,6 +42,7 @@ void CCheatManager::LoadGameSpecific() {
 		"cl_weather",
 		"dota_hud_chat_enable_all_emoticons"
 	);
+#endif
 
 	Interfaces::CVar->CVars["dota_hud_chat_enable_all_emoticons"].m_pVar->value.boolean = Config::Changer::UnlockEmoticons;
 
@@ -71,12 +73,6 @@ void CCheatManager::LoadFiles() {
 
 		Log(LP_INFO, "Loaded config from ", cheatFolderPath, "\\config\\base.json\n");
 	}
-
-	for (auto& file : std::filesystem::directory_iterator(cheatFolderPath + "\\assets\\misc")) {
-		auto path = file.path();
-		auto fileName = path.filename().string();
-		texManager.QueueForLoading(path.string(), fileName.substr(0, fileName.size() - 4));
-	}
 }
 
 void CCheatManager::Initialize(HMODULE hModule) {
@@ -88,12 +84,14 @@ void CCheatManager::Initialize(HMODULE hModule) {
 	// don't you dare touch this line
 	Log(LP_NONE, "works!");
 
+	LogI( "Initializing...");
 	FindCheatFolder();
 
 	Config::cfg.SetupVars();
 	LoadGameSpecific();
 
 	LoadFiles();
+	LogI( "Initialization complete!");
 }
 
 void CCheatManager::SaveConfig() {
@@ -123,5 +121,5 @@ void CCheatManager::Unload() {
 
 	if (consoleStream) fclose(consoleStream);
 	FreeConsole();
-	FreeLibraryAndExitThread(hModule, 0);
+	FreeLibrary(hModule);
 }

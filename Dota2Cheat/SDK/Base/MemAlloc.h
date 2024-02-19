@@ -9,12 +9,18 @@ struct CMemAlloc : public VClass {
 	}
 
 	template<typename T>
+	T* AllocArray(size_t arrSize) {
+		return CallVFunc<1, T*>(sizeof(T) * arrSize);
+	}
+
+	template<typename T>
 	T* AllocInit() {
 		T obj{};
 		auto mem = CallVFunc<1, T*>(sizeof(T));
 		memcpy(mem, &obj, sizeof(T));
 		return mem;
 	}
+
 	template<typename T>
 	T* AllocCopy(const T* obj) {
 		auto mem = CallVFunc<1, T*>(sizeof(T));
@@ -34,11 +40,11 @@ struct CMemAlloc : public VClass {
 
 	template<typename T = void>
 	T* ReAlloc(const T* p, size_t size) {
-		return CallVFunc<3, T*>(p, size);
+		return CallVFunc<2, T*>(p, size);
 	}
 
 	void Free(const void* p) {
-		return CallVFunc<5, void>(p);
+		return CallVFunc<3, void>(p);
 	}
 
 	size_t GetSize(const void* p) {

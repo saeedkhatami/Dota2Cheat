@@ -3,9 +3,9 @@
 #include <string>
 #include <string_view>
 #include <format>
+#include <mutex>
 
 inline std::mutex mLogging;
-inline HANDLE hStdOut = nullptr;
 
 enum class ConColor {
 	Black,
@@ -27,8 +27,7 @@ enum class ConColor {
 };
 
 inline void SetConsoleColor(ConColor text = ConColor::White, ConColor background = ConColor::Black) {
-	if (!hStdOut)
-		hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	static HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hStdOut, (WORD)(((WORD)background << 4) | (WORD)text));
 };
 
@@ -62,12 +61,23 @@ inline std::string GetLogPrefix(LogPrefix prefixType) {
 
 template<typename ...Args>
 void Log(LogPrefix prefixType, Args&&... args) {
-#ifndef _DEBUG
-	if (prefixType != LP_ERROR && prefixType != LP_WARNING)
-		return;
-#endif
+//#ifndef _DEBUG
+//	if (prefixType != LP_ERROR && prefixType != LP_WARNING)
+//		return;
+//#endif
 	std::lock_guard<std::mutex> lk(mLogging);
 	std::string prefix = GetLogPrefix(prefixType);
+	((std::cout << prefix) << ... << args) << '\n';
+	SetConsoleColor();
+}
+
+template<typename ...Args>
+void LogI(Args&&... args) {
+//#ifndef _DEBUG
+//	return;
+//#endif
+	std::lock_guard<std::mutex> lk(mLogging);
+	std::string prefix = GetLogPrefix(LP_INFO);
 	((std::cout << prefix) << ... << args) << '\n';
 	SetConsoleColor();
 }
@@ -75,10 +85,10 @@ void Log(LogPrefix prefixType, Args&&... args) {
 // Formatted log
 template<typename ...Args>
 void LogF(LogPrefix prefixType, const char* fmtString, Args&&... args) {
-#ifndef _DEBUG
-	if (prefixType != LP_ERROR && prefixType != LP_WARNING)
-		return;
-#endif
+//#ifndef _DEBUG
+//	if (prefixType != LP_ERROR && prefixType != LP_WARNING)
+//		return;
+//#endif
 	std::lock_guard<std::mutex> lk(mLogging);
 	std::string prefix = GetLogPrefix(prefixType);
 	std::cout << prefix << std::vformat(fmtString, std::make_format_args(std::forward<Args>(args)...)) << '\n';

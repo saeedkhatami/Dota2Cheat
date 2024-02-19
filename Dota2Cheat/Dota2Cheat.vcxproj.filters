@@ -123,7 +123,6 @@
     <ClCompile Include="Modules\UI\Indicators\KillIndicator.cpp" />
     <ClCompile Include="Modules\UI\Indicators\SpeedIndicator.cpp" />
     <ClCompile Include="CheatSDK\Utils.cpp" />
-    <ClCompile Include="include\cityhash\city.cc" />
     <ClCompile Include="Modules\UI\BlinkRevealer.cpp" />
     <ClCompile Include="Modules\UI\ParticleMaphack.cpp" />
     <ClCompile Include="Modules\UI\BarAugmenter.cpp" />
@@ -149,6 +148,10 @@
     <ClCompile Include="DebugFunctions.cpp" />
     <ClCompile Include="SDK\GameSystems\CGameEventManager.cpp" />
     <ClCompile Include="Hooks\FrameStageNotify.cpp" />
+    <ClCompile Include="UI\LoadingMenu.cpp" />
+    <ClCompile Include="CheatSDK\GameEventListeners\dota_player_update_assigned_hero.cpp" />
+    <ClCompile Include="CheatSDK\VTexDecoders\DXT5Decoder.cpp" />
+    <ClCompile Include="CheatSDK\VTexDecoders\VTexParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Modules\UI\UIOverhaul.h" />
@@ -380,5 +383,11 @@
     <ClInclude Include="SDK\Interfaces\CFlattenedSerializers.h" />
     <ClInclude Include="SDK\GameSystems\CDOTAInventoryManager.h" />
     <ClInclude Include="Hooks\FrameStageNotify.h" />
+    <ClInclude Include="UI\LoadingMenu.h" />
+    <ClInclude Include="CheatSDK\GameEventListeners\event_func.h" />
+    <ClInclude Include="CheatSDK\VTexDecoders\DXT5Decoder.h" />
+    <ClInclude Include="CheatSDK\VTexDecoders\VTexParser.h" />
+    <ClInclude Include="CheatSDK\VTexDecoders\vtex.h" />
+    <ClInclude Include="CheatSDK\Systems\AssetManager.h" />
   </ItemGroup>
 </Project>

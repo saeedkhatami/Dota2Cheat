@@ -12,12 +12,22 @@
 
 #include "../Modules/Hacks/SkinChanger.h"
 #include "../Modules/Hacks/LastHitMarker.h"
+#include "../UI/LoadingMenu.h"
+
+#include "../CheatSDK/VTexDecoders/VTexParser.h"
 
 LRESULT WINAPI Hooks::WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	static std::once_flag inputFix;
+
 	KeyHandler.OnWindowMessage(uMsg, wParam);
 
 	if (DrawData.ShowMenu) {
 		ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+
+		std::call_once(inputFix,
+			CallWindowProcA,
+			DrawData.Dx.oWndProc, hWnd, uMsg, wParam, lParam
+		);
 		return 1;
 	}
 
@@ -43,7 +53,6 @@ void InitImGui() {
 		DrawData.Fonts["Monofonto"][i] = io.Fonts->AddFontFromMemoryTTF((void*)Fonts::Monofonto, IM_ARRAYSIZE(Fonts::Monofonto), i, &fontCfg, io.Fonts->GetGlyphRangesDefault());
 	}
 
-	// Setup Dear ImGui style
 	ImGui::StyleColorsClassic();
 }
 
@@ -62,27 +71,28 @@ bool InitDX11(IDXGISwapChain* pSwapChain) {
 	DXGI_SWAP_CHAIN_DESC sd;
 	pSwapChain->GetDesc(&sd);
 	DrawData.Dx.Window = sd.OutputWindow;
-	
+
 	// Initializes D3D render target view
 	ID3D11Texture2D* pBackBuffer = nullptr;
 	pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
 	DrawData.Dx.pDevice->CreateRenderTargetView(pBackBuffer, &desc, &DrawData.Dx.mainRenderTargetView);
 	pBackBuffer->Release();
-
 	// Hooks WndProc
 	DrawData.Dx.oWndProc = (WNDPROC)SetWindowLongPtr(DrawData.Dx.Window, GWLP_WNDPROC, (LONG_PTR)Hooks::WndProc);
 
 	InitImGui();
 
-	DrawData.ShowMenu = true;
 	DrawData.Initialized = true;
+	DrawData.ShowMenu = true;
 
 	return true;
 }
+
 long Hooks::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
-	if (!DrawData.Initialized)
+	if (!DrawData.Initialized) {
 		if (!InitDX11(pSwapChain))
 			return oPresent(pSwapChain, SyncInterval, Flags);
+	}
 
 	auto& io = ImGui::GetIO();
 	static auto defaultFont = io.Fonts->AddFontDefault();
@@ -103,6 +113,7 @@ long Hooks::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 		&& ctx.gameStage == GameStage::IN_GAME
 		&& ctx.localHero
 		) {
+
 		Modules::AbilityESP.DrawESP();
 		Modules::UIOverhaul.DrawBars();
 		Modules::TPTracker.DrawMapTeleports();
@@ -110,7 +121,6 @@ long Hooks::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 		Modules::BlinkRevealer.Draw();
 		Modules::ParticleMaphack.Draw();
 		Modules::BarAugmenter.Draw();
-
 		Modules::SpeedIndicator.Draw();
 		Modules::KillIndicator.Draw();
 	}
@@ -118,8 +128,25 @@ long Hooks::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 
 	ImGui::PushFont(defaultFont);
 
-	if (DrawData.ShowMenu)
-		Pages::MainMenu::Draw();
+	//ImGui::Begin("Netvar Writes");
+	//{
+	//	if (ImGui::Button("Clear writes"))
+	//		writes.clear();
+
+	//	std::lock_guard<std::mutex> lk(writeMutex);
+	//	for (const auto& [k, v] : writes) {
+	//		ImGui::Text(std::format("{}: W {} LV {}", k, v.writeCount, v.lastVal).c_str());
+	//	}
+	//}
+	//ImGui::End();
+
+#ifndef _DEBUG
+	if (UIData::uiState == CheatUIState::LaunchMenu)
+		Menus::loadMenu.DrawLaunchDialogue();
+	else
+#endif
+		if (DrawData.ShowMenu)
+			Pages::MainMenu::Draw();
 
 	ImGui::PopFont();
 

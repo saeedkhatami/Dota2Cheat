@@ -90,7 +90,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <AdditionalIncludeDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <AdditionalOptions>/bigobj /FI"pch.h"</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -101,9 +101,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>glew32s.lib;glfw3.lib;libMinHook.x64.lib;opengl32.lib;d3d11.lib;libprotobufd.lib;libprotobuf-lited.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libMinHook.x64.lib;d3d11.lib;libprotobufd.lib;libprotobuf-lited.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib;$(ProjectDir)lib\;</AdditionalLibraryDirectories>
-      <IgnoreSpecificDefaultLibraries>msvcrt.lib;libcmtd.lib;libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>MSVCRT.LIB; %(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Testing|x64'">
@@ -129,7 +129,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>glew32s.lib;glfw3.lib;libMinHook.x64.lib;opengl32.lib;d3d11.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libMinHook.x64.lib;d3d11.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib;$(ProjectDir)lib\;</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;libcmtd.lib;libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -148,7 +148,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/bigobj /FI"pch.h"</AdditionalOptions>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <DisableSpecificWarnings>4244; 4267; 4005</DisableSpecificWarnings>
@@ -160,15 +160,18 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>glew32s.lib;glfw3.lib;libMinHook.x64.lib;opengl32.lib;d3d11.lib;libprotobuf.lib;libprotobuf-lite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libMinHook.x64.lib;d3d11.lib;libprotobuf.lib;libprotobuf-lite.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib;$(ProjectDir)lib\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x64</AdditionalLibraryDirectories>
-      <IgnoreSpecificDefaultLibraries>libcmtd.lib;libcmt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>MSVCRT.LIB;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CheatSDK\Data\EntityList.cpp" />
+    <ClCompile Include="CheatSDK\GameEventListeners\dota_player_update_assigned_hero.cpp" />
     <ClCompile Include="CheatSDK\Systems\CheatManager.cpp" />
     <ClCompile Include="CheatSDK\Systems\TextureManager.cpp" />
+    <ClCompile Include="CheatSDK\VTexDecoders\DXT5Decoder.cpp" />
+    <ClCompile Include="CheatSDK\VTexDecoders\VTexParser.cpp" />
     <ClCompile Include="DebugFunctions.cpp" />
     <ClCompile Include="Hooks\FrameStageNotify.cpp" />
     <ClCompile Include="Hooks\Present.cpp" />
@@ -187,7 +190,6 @@
     <ClCompile Include="Hooks\NetChannel.cpp" />
     <ClCompile Include="Hooks\PrepareUnitOrders.cpp" />
     <ClCompile Include="ImGuiSDK\Elements.cpp" />
-    <ClCompile Include="include\cityhash\city.cc" />
     <ClCompile Include="include\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="CheatSDK\MatchStateHandling.cpp" />
     <ClCompile Include="Modules\Hacks\AegisSnatcher.cpp" />
@@ -453,17 +455,21 @@
     <ClCompile Include="SDK\Protobufs\valveextensions.pb.cc">
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4244;4267</DisableSpecificWarnings>
     </ClCompile>
+    <ClCompile Include="UI\LoadingMenu.cpp" />
     <ClCompile Include="UI\Pages\AutoPickSelectionGrid.cpp" />
     <ClCompile Include="UI\Pages\MainMenu.cpp" />
     <ClCompile Include="Utils\Drawing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CheatSDK\GameEventListeners\event_func.h" />
     <ClInclude Include="CheatSDK\Globals\include.h" />
     <ClInclude Include="CheatSDK\Globals\Panorama.h" />
+    <ClInclude Include="CheatSDK\Systems\AssetManager.h" />
     <ClInclude Include="CheatSDK\Systems\CheatManager.h" />
     <ClInclude Include="CheatSDK\KeyHandler.h" />
     <ClInclude Include="CheatSDK\Data\UIData.h" />
     <ClInclude Include="CheatSDK\Systems\TextureManager.h" />
+    <ClInclude Include="CheatSDK\VTexDecoders\vtex.h" />
     <ClInclude Include="Hooks\FrameStageNotify.h" />
     <ClInclude Include="Hooks\Present.h" />
     <ClInclude Include="Hooks\SteamGC.h" />
@@ -613,6 +619,8 @@
     <ClInclude Include="SDK\Panorama\CSource2UITexture.h" />
     <ClInclude Include="SDK\Panorama\CUIEngineSource2.h" />
     <ClInclude Include="SDK\Panorama\CUIPanel.h" />
+    <ClInclude Include="CheatSDK\VTexDecoders\DXT5Decoder.h" />
+    <ClInclude Include="CheatSDK\VTexDecoders\VTexParser.h" />
     <ClInclude Include="SDK\Protobufs\base_gcmessages.pb.h" />
     <ClInclude Include="SDK\Protobufs\clientmessages.pb.h" />
     <ClInclude Include="SDK\Protobufs\connectionless_netmessages.pb.h" />
@@ -667,6 +675,7 @@
     <ClInclude Include="SDK\Protobufs\uifontfile_format.pb.h" />
     <ClInclude Include="SDK\Protobufs\usercmd.pb.h" />
     <ClInclude Include="SDK\Protobufs\valveextensions.pb.h" />
+    <ClInclude Include="UI\LoadingMenu.h" />
     <ClInclude Include="UI\Pages\AutoPickSelectionGrid.h" />
     <ClInclude Include="Utils\Drawing.h" />
     <ClInclude Include="CheatSDK\Globals\Context.h" />
