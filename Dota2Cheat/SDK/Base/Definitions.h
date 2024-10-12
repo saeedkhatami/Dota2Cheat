@@ -14,10 +14,12 @@ constexpr uint32_t INVALID_HANDLE = 0xFFFFFFFF;
 #define CASE_STRING( x ) case static_cast<int>( x ) : return #x
 #define CASE_STD_STRING( x ) case static_cast<int>( x ) : return std::string(#x)
 
-#define PAD(N) private: [[maybe_unused]] char _CONCAT(_pad, __LINE__)[N] = { 0 }; public:
+#define ONLY_ONCE if (static bool _DO_ONCE_ = true; std::exchange(_DO_ONCE_, false)) 
+
+#define PAD(N) private: [[maybe_unused]] char _CONCAT(_pad, __COUNTER__)[N] = { 0 }; public:
 
 // Macros for dota classes
 #define GETTER(type, name, offset) type name() const { return Member<type>(offset); }			// regular getter
 #define IGETTER(type, name, offset) type* name() const { return MemberInline<type>(offset); }  // inline field
 #define FIELD(type, name, offset) type& name() const { return Field<type>(offset); }           // like GETTER, but returns a reference
-#define VGETTER(type, name, index) type name() { return CallVFunc<index, type>(); }     // vfunc without arguments
+#define VGETTER(type, name, index) type name() { return GetVFunc(index).Call<type>(); }     // vfunc without arguments

@@ -12,49 +12,58 @@
 
 #include <d3d11.h>
 #include <dxgi.h>
+#include <queue>
 #include "../Data/DrawData.h"
 
 // Texture management system
 // Caches loaded textures which you can get by the name identifier
 inline class TextureManager {
-	std::unordered_map<std::string, ID3D11ShaderResourceView*> namedTex;
-	std::map<std::string, ID3D11ShaderResourceView**> loadingQueue;
-	bool requiresUnload = false;
-public:
-	ID3D11ShaderResourceView* GetNamedTexture(const std::string& name) {
-		return namedTex[name];
-	}
+	using tex_ptr = ID3D11ShaderResourceView*;
 
-	void InitDX11Texture(int image_width,
-		int image_height,
-		unsigned char* image_data,
-		ID3D11ShaderResourceView** out_srv);
+	struct DeferredInit {
+		using callback_t = void(*)(DeferredInit&);
+
+		unsigned width, height;
+		unsigned char* data;
+		tex_ptr* out;
+		callback_t callback; // for stuff like clearing memory
+	};
+	std::queue<DeferredInit> loadingQueue;
+public:
+	void InitTexture(unsigned image_width,
+		unsigned image_height,
+		const unsigned char* image_data,
+		tex_ptr* out_srv) const;
+
+	void InitTextureDeferred(unsigned width, unsigned height, unsigned char* data, tex_ptr* out, DeferredInit::callback_t callback = nullptr) {
+		loadingQueue.emplace(
+			DeferredInit{
+			.width = width,
+			.height = height,
+			.data = data,
+			.out = out,
+			.callback = callback
+			}
+		);
+	};
 
 	template<size_t size>
-	bool LoadTextureFromMemory(unsigned char const (&data)[size], ID3D11ShaderResourceView** tex) {
+	bool LoadTextureFromMemory(unsigned char const (&data)[size], tex_ptr* tex) {
 		return LoadTextureFromMemory(data, size, tex);
 	}
-	bool LoadTextureFromMemory(unsigned char* data, size_t size, ID3D11ShaderResourceView** tex);
+	bool LoadTextureFromMemory(unsigned char* data, size_t size, tex_ptr* tex);
 
-	bool LoadTextureFromFile(std::string_view filename, ID3D11ShaderResourceView** tex);
-	bool LoadTextureNamed(std::string_view filename, ID3D11ShaderResourceView** tex, const std::string& texName) {
-		auto result = LoadTextureFromFile(filename, tex);
-		namedTex[texName] = *tex;
-		return result;
-	}
-
-	void QueueForLoading(const std::string& filename, const std::string& texName) {
-		if (!namedTex.count(texName))
-			loadingQueue[filename] = &namedTex[texName];
-	}
+	bool LoadTextureFromFile(std::string_view filename, tex_ptr* tex);
 
 	void ExecuteLoadCycle() {
-		for (auto& [path, tex] : loadingQueue) {
-			// LogF(LP_INFO, "Loading image: {}", path);
-			LoadTextureFromFile(path.c_str(), tex);
-		}
+		while (!loadingQueue.empty()) {
+			auto& data = loadingQueue.front();
 
-		loadingQueue.clear();
+			InitTexture(data.width, data.height, data.data, data.out);
+			if (data.callback) data.callback(data);
+
+			loadingQueue.pop();
+		}
 	}
 
 } texManager;

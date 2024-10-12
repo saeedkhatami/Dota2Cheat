@@ -7,4 +7,6 @@
 class CDOTA_BinaryObjectSystem : public VClass {
 public:
 	GETTER(CUtlVector<CBaseEntity*>, GetTrees, 0x18);
+
+	static CDOTA_BinaryObjectSystem* Get();
 };

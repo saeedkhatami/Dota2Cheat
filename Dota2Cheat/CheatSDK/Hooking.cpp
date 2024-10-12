@@ -1,64 +1,62 @@
 #include "Hooking.h"
+#include <Base/VMT.h>
 
-#define HOOKFUNC_SIGNATURES(func) HookFunc(Signatures::##func, &hk##func, &o##func, #func)
+bool meme(void* rcx, const CNETMsg_Tick* msg) {
+	return 1;
+}
 
 void Hooks::InstallHooks() {
-	HOOKFUNC_SIGNATURES(PrepareUnitOrders);
+	hooks::Hook(Signatures::PrepareUnitOrders, &Hooks::hkPrepareUnitOrders, &Hooks::oPrepareUnitOrders, "CDOTAPlayerController::PrepareUnitOrders");
 
 #if defined(_DEBUG) && !defined(_TESTING)
-	{
-		auto SendMsg = VMT(Interfaces::SteamGC).GetVM(0);
-		HookFunc(SendMsg, &Hooks::hkSendMessage, &Hooks::oSendMessage, "ISteamGameCoordinator::SendMessage");
-	}
-	HOOKFUNC_SIGNATURES(SaveSerializedSOCache);
+	auto SendMsg = VMT(ISteamGC::Get())[0];
+	auto RetrieveMessage = VMT(ISteamGC::Get())[2];
+	hooks::Hook(SendMsg, &Hooks::hkSendMessage, &Hooks::oSendMessage, "ISteamGameCoordinator::SendMessage");
+	hooks::Hook(RetrieveMessage, &Hooks::hkRetrieveMessage, &Hooks::oRetrieveMessage, "ISteamGameCoordinator::RetrieveMessage");
 #endif // _DEBUG
 
-#ifdef _TESTING
-	{
-		auto RetrieveMessage = VMT(Interfaces::SteamGC).GetVM(2);
-		HookFunc(RetrieveMessage, &Hooks::hkRetrieveMessage, &Hooks::oRetrieveMessage, "ISteamGameCoordinator::RetrieveMessage");
-	}
-#endif
-
-	{
-		// NetChan constructor
-		// vtable ptr at 0x15
-		uintptr_t** vtable = SignatureDB::FindSignature("CNetChan::vftable");
-		uintptr_t* PostReceivedNetMessage = vtable[86], * SendNetMessage = vtable[69]; // bytehooking through vtables, how's that, Elon Musk?
-		HOOKFUNC(PostReceivedNetMessage);
-		// HOOKFUNC(SendNetMessage);
-	}
 	{
 		// CDOTA_Buff destructor
 		// vtable ptr at 0xd
 		auto OnRemoveModifier = SignatureDB::FindSignature("CDOTA_Buff::~CDOTA_Buff");
 		uintptr_t** vtable = OnRemoveModifier.Offset(0xD).GetAbsoluteAddress(3);
-		uintptr_t* OnAddModifier = vtable[VTableIndexes::CDOTA_Buff::OnAddModifier];
+		uintptr_t* OnAddModifier = vtable[VMI::CDOTA_Buff::OnAddModifier];
 		HOOKFUNC(OnAddModifier);
 		HOOKFUNC(OnRemoveModifier);
-		CDOTAParticleManager::DestroyParticleFunc = OnRemoveModifier.Offset(0x5E).GetAbsoluteAddress(1);
+		CDOTAParticleManager::DestroyParticleFunc = OnRemoveModifier.Offset(0x72).GetAbsoluteAddress(1);
 	}
 	{
 		// xref: "CParticleCollection::~CParticleCollection [%p]\n"
-		uintptr_t** vtable = SignatureDB::FindSignature("CParticleCollection::~CParticleCollection");
-		auto SetRenderingEnabled = vtable[VTableIndexes::CParticleCollection::SetRenderingEnabled];
+		uintptr_t** vtable = SignatureDB::FindSignature("CParticleCollection::CParticleCollection");
+		auto SetRenderingEnabled = vtable[VMI::CParticleCollection::SetRenderingEnabled];
 		HOOKFUNC(SetRenderingEnabled);
 	}
+
+	//void* FrameStageNotify = CSource2Client::Get()->GetVFunc(VMI::CSource2Client::FrameStageNotify);
+	//HOOKFUNC(FrameStageNotify);
+
 #ifndef _TESTING
-	{
-
-
-		void* FrameStageNotify = Interfaces::Client->GetVFunc(31);
-		void* RunScript = Interfaces::UIEngine->GetVFunc(VTableIndexes::CUIEngineSource2::RunScript);
-
-		HOOKFUNC(RunScript);
-		HOOKFUNC(FrameStageNotify);
-	}
+	void* RunScript = CUIEngine::Get()->GetVFunc(VMI::CUIEngineSource2::RunScript);
+	HOOKFUNC(RunScript);
 #endif
-	{
-		Interfaces::EntitySystem->GetListeners().push_back(&EntityList);
-	}
 
-	HookDX11Old();
+	//auto CreateNetChan = SignatureDB::FindSignature("CNetworkSystem::CreateNetChan");
+	//HOOKFUNC(CreateNetChan);
+
+	//{
+	//	auto PacketEntitiesFilter__Filter = SignatureDB::FindSignature("PacketEntitiesFilter::Filter");
+	//	HOOKFUNC(PacketEntitiesFilter__Filter);
+	//}
+	//{
+	//	auto client = INetworkClientService::Get()->GetIGameClient();
+	//	auto nc = client->GetNetChannel();
+	//	auto buf = ((VClass*)client)->MemberInline<void>(40);
+	//	
+	//	auto pbs = CNetworkMessages::Get()->FindNetworkMessageByID(4);
+	//	CUtlAbstractDelegate d(client, meme);
+	//	nc->StartRegisteringMessageHandlers();
+	//	nc->RegisterAbstractMessageHandler(buf, &d, 1, pbs, 0);
+	//	nc->FinishRegisteringMessageHandlers();
+	//}
 }
 

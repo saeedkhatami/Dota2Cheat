@@ -7,17 +7,6 @@
 #include "../CheatSDK/KeyHandler.h"
 #include "../UI/Pages/MainMenu.h"
 
-inline std::mutex writeMutex;
-struct NetvarWriteData {
-	int writeCount = 0;
-	int lastVal{};
-};
-inline std::map<std::string, NetvarWriteData> writes;
-
-// DirectX11's SwapChain::Present, used to render things
-// Its hooking is different from the "classical" method of creating a dummy window
-// We just hook the overlay's hook!
-
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Hooks {
@@ -28,11 +17,6 @@ namespace Hooks {
 
 	long hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
 
-	inline bool HookDirectX() {
-		// xref: "Hooking vtable for swap chain\n"
-		auto Present = SignatureDB::FindSignature("IDXGISwapChain::Present");
-		return HOOKFUNC(Present);
-	}
 
 	inline bool HookDX11Old() {
 		HWND hWnd = GetForegroundWindow();
@@ -57,7 +41,7 @@ namespace Hooks {
 		if (FAILED(D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, &featureLevel, 1
 			, D3D11_SDK_VERSION, &swapChainDesc, &pSwapChain, &pDevice, NULL, &pContext)))
 		{
-			MessageBox(hWnd, "Failed to create directX device and swapchain!", "uBoos?", MB_ICONERROR);
+			MessageBox(hWnd, "Failed to create DirectX device and swapchain!", "Dota2Cheat", MB_ICONERROR);
 			return false;
 		}
 
@@ -65,11 +49,17 @@ namespace Hooks {
 		auto Present = (*(void***)pSwapChain)[8];
 		auto res = HOOKFUNC(Present);
 
-
 		pDevice->Release();
 		pContext->Release();
 		pSwapChain->Release();
 
 		return res;
+	}
+	inline bool HookDirectX() {
+		HookDX11Old();
+
+		// xref: "Hooking vtable for swap chain\n"
+		//auto Present = SignatureDB::FindSignature("IDXGISwapChain::Present");
+		//return HOOKFUNC(Present);
 	}
 }

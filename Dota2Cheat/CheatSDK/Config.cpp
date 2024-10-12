@@ -1,7 +1,7 @@
 #include "Config.h"
 #include "../Modules/Hacks/SkinChanger.h"
 
-void Config::ConfigManager::SaveConfig(std::ofstream& stream) {
+void Config::ConfigManager::SaveToFile(std::ofstream& stream) {
 
 	using enum ConfigVarType;
 	using json = nlohmann::json;
@@ -13,9 +13,10 @@ void Config::ConfigManager::SaveConfig(std::ofstream& stream) {
 		auto& entry = *GetJsonEntryFromCfgVar(data, name);
 		switch (var.type) {
 		case BOOL: entry = *(bool*)var.val; break;
-		case FLOAT: entry = *(float*)var.val; break;
 		case INT: entry = *(int*)var.val; break;
 		case UINT_64: entry = *(uint64_t*)var.val; break;
+		case FLOAT: entry = *(float*)var.val; break;
+		case STRING: entry = *(std::string*)var.val; break;
 		case VECTOR2D: {
 			Vector2D& vec = *(Vector2D*)var.val;
 			entry["x"] = vec.x;
@@ -35,7 +36,7 @@ void Config::ConfigManager::SaveConfig(std::ofstream& stream) {
 	stream << data.dump(2);
 }
 
-void Config::ConfigManager::LoadConfig(std::ifstream& stream) {
+void Config::ConfigManager::LoadFromFile(std::ifstream& stream) {
 	using enum ConfigVarType;
 	using json = nlohmann::json;
 
@@ -47,9 +48,10 @@ void Config::ConfigManager::LoadConfig(std::ifstream& stream) {
 
 		switch (var.type) {
 		case BOOL: *(bool*)var.val = entry; break;
-		case FLOAT: *(float*)var.val = entry; break;
 		case INT: *(int*)var.val = entry; break;
 		case UINT_64: *(uint64_t*)var.val = entry; break;
+		case FLOAT: *(float*)var.val = entry; break;
+		case STRING: *(std::string*)var.val = entry; break;
 		case VECTOR2D: {
 			Vector2D& vec = *(Vector2D*)var.val;
 			vec.x = entry["x"];
@@ -83,35 +85,34 @@ void Config::ConfigManager::SaveEquippedItems(std::ofstream& stream) {
 void Config::ConfigManager::LoadEquippedItems(std::ifstream& stream) {
 	using json = nlohmann::json;
 	json data = json::parse(stream);
-	if (!data.is_null())
-		for (auto& [itemDef, equip] : data.items())
-			Modules::SkinChanger.itemsToEquip[stoi(itemDef)] = Modules::SkinChanger::QueuedEquip{
-			.unClass = equip[0],
-			.unSlot = equip[1]
-		};
+	if (data.is_null()) return;
+
+	for (auto& [itemDef, equip] : data.items())
+		Modules::SkinChanger.itemsToEquip[stoi(itemDef)] = Modules::SkinChanger::QueuedEquip{
+		.unClass = equip[0],
+		.unSlot = equip[1]
+	};
 }
 
 // Minimized the definition syntax as much as I can
 // Pure elegancy
-#define CFG_VAR(var, defVal) cfg.AddVar(&var, defVal, #var)
+#define CFG_VAR(var, defVal) cfg.AddVar<decltype(var)>(&Config::var, defVal, #var)
 
 void Config::ConfigManager::SetupVars() {
-	using namespace Config;
-
 	CFG_VAR(AbilityESP::Enabled, true);
-	CFG_VAR(AbilityESP::UIScale, 1.0f);
+	CFG_VAR(AbilityESP::UIScale, 1);
 	CFG_VAR(AbilityESP::LevelCounterType, 0);
 	CFG_VAR(AbilityESP::ItemPanelType, 0);
 	CFG_VAR(AbilityESP::Rounding, 100);
 	CFG_VAR(AbilityESP::ShowAllies, true);
+	CFG_VAR(AbilityESP::ApplyIconModifiers, false);
 	CFG_VAR(AbilityESP::ShowCooldownDecimals, false);
 
-	CFG_VAR(Bars::ManaBars, true);
 	CFG_VAR(Bars::HPNumbers, true);
 
 	CFG_VAR(Indicators::Speed, true);
 	CFG_VAR(Indicators::Kill, true);
-	CFG_VAR(Indicators::KillScale, 1.0f);
+	CFG_VAR(Indicators::KillScale, 1);
 
 	CFG_VAR(BlinkRevealer, true);
 
@@ -120,7 +121,7 @@ void Config::ConfigManager::SetupVars() {
 
 	CFG_VAR(AutoDodge::Enabled, false);
 
-	CFG_VAR(CameraDistance, 1200.0f);
+	CFG_VAR(CameraDistance, 1200);
 
 	CFG_VAR(ShowEnemyPointSpells, true);
 	CFG_VAR(ShowLinearProjTrajectory, true);
@@ -130,6 +131,7 @@ void Config::ConfigManager::SetupVars() {
 	CFG_VAR(UIOverhaul::NetworthPanel, true);
 
 	CFG_VAR(ModifierRevealer::LinkenSphere, true);
+	CFG_VAR(ModifierRevealer::MirrorShield, true);
 	CFG_VAR(ModifierRevealer::TargetedSpells, true);
 	CFG_VAR(ModifierRevealer::TrueSight, true);
 
@@ -141,7 +143,7 @@ void Config::ConfigManager::SetupVars() {
 	CFG_VAR(ParticleMapHack::FadeDuration, 5);
 
 	CFG_VAR(IllusionColoring::Enabled, true);
-	CFG_VAR(IllusionColoring::Color, Vector(1,1,1));
+	CFG_VAR(IllusionColoring::Color, Vector(1, 1, 1));
 
 	CFG_VAR(ManaAbuse::Enabled, false);
 	CFG_VAR(ManaAbuse::Mode, 0);
@@ -161,8 +163,8 @@ void Config::ConfigManager::SetupVars() {
 	CFG_VAR(Changer::UnlockEmoticons, true);
 
 	CFG_VAR(AutoHeal::Enabled, false);
-	CFG_VAR(AutoHeal::FaerieFireHPTreshold, 5.f);
-	CFG_VAR(AutoHeal::WandHPTreshold, 10.f);
+	CFG_VAR(AutoHeal::FaerieFireHPTreshold, 5);
+	CFG_VAR(AutoHeal::WandHPTreshold, 10);
 	CFG_VAR(AutoHeal::WandMinCharges, 10);
 
 	CFG_VAR(BadCastPrevention, true);
@@ -171,4 +173,6 @@ void Config::ConfigManager::SetupVars() {
 
 	CFG_VAR(AutoMidas::Enabled, false);
 	CFG_VAR(AutoMidas::XPTreshold, 60);
+
+	CFG_VAR(Locale, "en_US");
 }

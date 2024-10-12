@@ -1,12 +1,12 @@
 #include "ParticleAbilityWarner.h"
-#include "../../SDK/Protobufs/usermessages.pb.h"
+#include <usermessages.pb.h>
 
 
 // Draws a dashed red line from begin to end
 // Returns the wrapper for the created particle
 
 ParticleWrapper Modules::ParticleAbilityWarner::DrawTrajectory(Vector begin, Vector end) {
-	auto pw = GameSystems::ParticleManager->CreateParticle(
+	auto pw = CParticleMgr::Get()->CreateParticle(
 		"particles/ui_mouseactions/range_finder_tower_line.vpcf",
 		PATTACH_WORLDORIGIN,
 		ctx.localHero
@@ -19,7 +19,7 @@ ParticleWrapper Modules::ParticleAbilityWarner::DrawTrajectory(Vector begin, Vec
 }
 
 ParticleWrapper Modules::ParticleAbilityWarner::DrawRadius(Vector pos, float radius) {
-	auto pw = GameSystems::ParticleManager->CreateParticle(
+	auto pw = CParticleMgr::Get()->CreateParticle(
 		"particles/units/heroes/hero_snapfire/hero_snapfire_range_finder_aoe.vpcf",
 		PATTACH_WORLDORIGIN,
 		ctx.localHero
@@ -52,7 +52,7 @@ void Modules::ParticleAbilityWarner::OnReceivedMsg(NetMessageHandle_t* msgHandle
 				break;
 			queuedParticleIndexes[msgIndex] = AbilityParticleInfo{
 				.nameIndex = (AbilityParticles)particle.particle_name_index(),
-				.owner = Interfaces::EntitySystem->GetEntity<CDOTABaseNPC>(
+				.owner = CEntSys::Get()->GetEntity<CDOTABaseNPC>(
 					NH2IDX(particle.entity_handle_for_modifiers()))
 			};
 			break;
@@ -67,7 +67,7 @@ void Modules::ParticleAbilityWarner::OnReceivedMsg(NetMessageHandle_t* msgHandle
 			break;
 
 		auto updParticleEnt = pmMsg->update_particle_ent();
-		auto owner = Interfaces::EntitySystem->GetEntity(NH2IDX(updParticleEnt.entity_handle()));
+		auto owner = CEntSys::Get()->GetEntity(NH2IDX(updParticleEnt.entity_handle()));
 		// If they're not an enemy we dequeue the particle's index
 		if (!owner || owner->IsSameTeam(ctx.localHero)) {
 			queuedParticleIndexes.erase(msgIndex);
@@ -77,11 +77,7 @@ void Modules::ParticleAbilityWarner::OnReceivedMsg(NetMessageHandle_t* msgHandle
 
 		switch (info.nameIndex) {
 		case AbilityParticles::AP_PUDGE_MEAT_HOOK: {
-			info.begin = Vector{
-				updParticleEnt.fallback_position().x(),
-				updParticleEnt.fallback_position().y(),
-				updParticleEnt.fallback_position().z()
-			};
+			info.begin = updParticleEnt.fallback_position();
 			info.owner = (CDOTABaseNPC*)owner;
 			break;
 		}
@@ -95,11 +91,7 @@ void Modules::ParticleAbilityWarner::OnReceivedMsg(NetMessageHandle_t* msgHandle
 
 		auto& info = queuedParticleIndexes[msgIndex];
 		auto cpIdx = pmMsg->update_particle_transform().control_point();
-		auto cpVal = Vector{
-			pmMsg->update_particle_transform().position().x(),
-			pmMsg->update_particle_transform().position().y(),
-			pmMsg->update_particle_transform().position().z()
-		};
+		Vector cpVal = pmMsg->update_particle_transform().position();
 
 		switch (info.nameIndex) {
 		case AP_PUDGE_MEAT_HOOK:
@@ -158,8 +150,8 @@ void Modules::ParticleAbilityWarner::OnReceivedMsg(NetMessageHandle_t* msgHandle
 			Modules::ParticleGC.RemoveFromGC(data.trajectory);
 			Modules::ParticleGC.RemoveFromGC(data.aoe);
 
-			GameSystems::ParticleManager->DestroyParticle(data.trajectory);
-			GameSystems::ParticleManager->DestroyParticle(data.aoe);
+			CParticleMgr::Get()->DestroyParticle(data.trajectory);
+			CParticleMgr::Get()->DestroyParticle(data.aoe);
 
 			TrackedAbilityParticles.erase(msgIndex);
 		}

@@ -1,22 +1,20 @@
 #pragma once
-#include <imgui/imgui.h>
 #include <string>
 #include <map>
 #include <Windows.h>
 #include <d3d11.h>
 #include <dxgi.h>
 #include <algorithm>
+#include <imgui/imgui.h>
 
 inline struct CDrawData {
 	bool Initialized = false;
 
-	// some people love to play with their Dota HUD flipped
-	bool IsHUDFlipped = false;
-	std::map<std::string, std::map<int, ImFont*>> Fonts;
+	std::unordered_map<std::string_view, std::unordered_map<int, ImFont*>> Fonts;
 	bool ShowMenu = false;
 
-	// Clamps the size to 10-26 range and rounds the font size to the nearest even number
-	ImFont* GetFont(const std::string& name, int size) {
+	// Clamps the size to 10-26 range and rounds the font size up to the nearest even number
+	ImFont* GetFont(std::string_view name, int size) {
 		size = std::clamp(size, 10, 26);
 		if (size % 2 != 0)
 			++size;

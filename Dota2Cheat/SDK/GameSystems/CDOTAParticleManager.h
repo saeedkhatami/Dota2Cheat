@@ -6,7 +6,7 @@
 #include "../Interfaces/Network/CNetworkMessages.h"
 
 #include "../Base/Vector.h"
-#include "../VTableIndexes.h"
+#include "../VMI.h"
 
 class CBaseEntity;
 
@@ -64,11 +64,52 @@ private:
 
 static_assert(sizeof(CreateParticleInfo) == 0x40);
 
+
+class CParticleCollectionRendererVecInput : public VClass {
+public:
+	FIELD(Color, LiteralColor, Netvars::CParticleVecInput::m_LiteralColor);
+};
+
+enum ParticleColorBlendType_t {
+	PARTICLE_COLOR_BLEND_MULTIPLY = 0,
+	PARTICLE_COLOR_BLEND_MULTIPLY2X = 1,
+	PARTICLE_COLOR_BLEND_DIVIDE = 2,
+	PARTICLE_COLOR_BLEND_ADD = 3,
+	PARTICLE_COLOR_BLEND_SUBTRACT = 4,
+	PARTICLE_COLOR_BLEND_MOD2X = 5,
+	PARTICLE_COLOR_BLEND_SCREEN = 6,
+	PARTICLE_COLOR_BLEND_MAX = 7,
+	PARTICLE_COLOR_BLEND_MIN = 8,
+	PARTICLE_COLOR_BLEND_REPLACE = 9,
+	PARTICLE_COLOR_BLEND_AVERAGE = 10,
+	PARTICLE_COLOR_BLEND_NEGATE = 11,
+	PARTICLE_COLOR_BLEND_LUMINANCE = 12,
+};
+
+
+class C_OP_RenderSprites : public VClass {
+public:
+	IGETTER(CParticleCollectionRendererVecInput, GetVecColorScale, Netvars::CBaseRendererSource2::m_vecColorScale);
+	FIELD(ParticleColorBlendType_t, BlendType, Netvars::CBaseRendererSource2::m_nColorBlendType);
+};
+
+class CParticleSystemDefinition : public VClass {
+public:
+	GETTER(CUtlVector<C_OP_RenderSprites*>, GetRenderers, Netvars::CParticleSystemDefinition::m_Renderers);
+};
+
+
 class CParticleCollection : public VClass {
 public:
-	VGETTER(bool, GetRenderingEnabled, VTableIndexes::CParticleCollection::SetRenderingEnabled - 1);
+	struct ParticleDef {
+		CParticleSystemDefinition* pDef;
+		const char* szResource;
+	};
+
+	FIELD(ParticleDef*, Definition, 0x18);
+	VGETTER(bool, GetRenderingEnabled, VMI::CParticleCollection::SetRenderingEnabled - 1);
 	void SetRenderingEnabled(bool value) {
-		CallVFunc<VTableIndexes::CParticleCollection::SetRenderingEnabled>(value);
+		GetVFunc(VMI::CParticleCollection::SetRenderingEnabled)(value);
 	}
 };
 
@@ -77,7 +118,7 @@ struct CNewParticleEffect : public VClass {
 
 	CNewParticleEffect* SetControlPoint(int idx, const Vector& pos) {
 		auto coll = GetParticleCollection();
-		coll->CallVFunc<VTableIndexes::CParticleCollection::SetControlPoint>(idx, &pos);
+		coll->GetVFunc(VMI::CParticleCollection::SetControlPoint)(idx, &pos);
 		return this;
 	}
 };
@@ -94,16 +135,6 @@ struct ParticleWrapper {
 	}
 };
 
-// Found via x64dbg
-// Xref "CreateParticle" to a lea rax instruction
-// You must see "pParticleName" below it
-// Right above "pParticleName" is lea rcx, [XXXXXXXXX], Right click -> Follow in Disassembler -> Constant
-// The second call instruction is GetParticleManager, has only mov rax, [XXXXXXXX] then ret
-// Now the only remaining step is to get the absolute address of the call, then of the CDOTAParticleManager**(yes, it's a pointer to a pointer, must be dereferenced as seen in Globals.h)
-
-// In the next, third call, we see:
-// mov rax, [rcx]       <- Puts the Particle vtable pointer into rax
-// call [rax + 38h]     <- Calls the vfunc on index 0x38 / 8 = 16
 class CDOTAParticleManager : public VClass {
 	static inline std::vector<ParticleWrapper> particles{};
 public:
@@ -111,15 +142,17 @@ public:
 		GETTER(CNewParticleEffect*, GetParticle, 0x10);
 		GETTER(uint32_t, GetHandle, 0x2C);
 	};
-	static inline void(__fastcall* DestroyParticleFunc)(void* thisptr, ENT_HANDLE handle, bool unk);
+	static inline void(__fastcall* DestroyParticleFunc)(void* thisptr, ENT_HANDLE handle, bool unk1, bool unk2);
 
 	GETTER(CUtlVector<ParticleContainer*>, GetParticles, 0x80);
-	FIELD(uint32_t, GetHandle, 0xb8);
+	FIELD(uint32_t, Handle, 0xD0); // offset in function called by JS CreateParticle binding (7.36: E8 ? ? ? ? 83 7D 67 FF)
 
 	ParticleWrapper CreateParticle(const char* name, ParticleAttachment_t attachType, CBaseEntity* ent);
 	void DestroyParticle(uint32_t handle);
 	void DestroyParticle(ParticleWrapper& info);
 
 	void OnExitMatch();
+
+	static CDOTAParticleManager* Get();
 };
 

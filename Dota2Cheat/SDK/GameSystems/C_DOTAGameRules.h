@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../Protobufs/dota_shared_enums.pb.h"
+#include <dota_shared_enums.pb.h>
 #include "../Base/VClass.h"
 #include "../Base/Definitions.h"
 #include "../Base/CUtlVector.h"
 #include "../Netvars.h"
+
+#include "CGlobalVars.h"
 
 class ItemStockInfo : VClass {
 private:
@@ -20,18 +22,37 @@ public:
 };
 
 class CDOTAGameRules : public VClass {
+	static inline CDOTAGameRules* inst = nullptr; 
 public:
 	GETTER(DOTA_GameState, GetGameState, Netvars::C_DOTAGamerules::m_nGameState);
 	GETTER(DOTA_GameMode, GetGameMode, Netvars::C_DOTAGamerules::m_iGameMode);
-	GETTER(bool, IsGamePaused, Netvars::C_DOTAGamerules::m_bGamePaused);
+	GETTER(bool, IsGamePaused, Netvars::C_GameRules::m_bGamePaused);
 	GETTER(uint64_t, GetMatchID, Netvars::C_DOTAGamerules::m_unMatchID64);
 	GETTER(int32_t, GetRiverType, Netvars::C_DOTAGamerules::m_nRiverType);
 	GETTER(float, GetPreGameStartTime, Netvars::C_DOTAGamerules::m_flPreGameStartTime);
 	GETTER(float, GetGameStartTime, Netvars::C_DOTAGamerules::m_flGameStartTime);
 	GETTER(float, GetGameLoadTime, Netvars::C_DOTAGamerules::m_flGameLoadTime);
 	GETTER(float, GetGameEndTime, Netvars::C_DOTAGamerules::m_flGameEndTime);
-
-	float GetGameTime();
-
 	GETTER(CUtlVector<ItemStockInfo>, GetItemStockInfo, Netvars::C_DOTAGamerules::m_vecItemStockInfo);
+
+	float GetGameTime() const {
+		float x;
+		GetVFunc(VMI::CDOTAGameRules::GetGameTime)(&x, 0);
+		return x;
+	}
+
+	float GetDOTATime() const {
+		return GetGameTime() - GetGameStartTime() + GetGameLoadTime();
+	}
+
+	// Instance initialization is deferred to game start
+	static void Set(CDOTAGameRules* inst) {
+		CDOTAGameRules::inst = inst;
+	}
+
+	static CDOTAGameRules* Get() {
+		return inst;
+	}
 };
+
+using CGameRules = CDOTAGameRules;

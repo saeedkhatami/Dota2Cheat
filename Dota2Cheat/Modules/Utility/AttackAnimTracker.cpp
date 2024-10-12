@@ -1,10 +1,11 @@
 #include "AttackAnimTracker.h"
+#include <dota_usermessages.pb.h>
 
 bool Utility::AttackAnimTracker::WillUnitAttack(CDOTABaseNPC* unit, CDOTABaseNPC* target, float timeDelta) {
 	if (!animations.count(unit))
 		return false;
 	auto anim = animations[unit];
-	if (anim.startTime + anim.castPoint <= GameSystems::GameRules->GetGameTime() + timeDelta &&
+	if (anim.startTime + anim.castPoint <= CGameRules::Get()->GetGameTime() + timeDelta &&
 		target == Modules::AttackTargetFinder.GetAttackTarget(unit))
 		return true;
 
@@ -18,16 +19,16 @@ void Utility::AttackAnimTracker::ProcessAttackAnimMessage(NetMessageHandle_t* ms
 
 		if (animMsg->activity() != 1503)
 			return;
-		auto npc = Interfaces::EntitySystem->GetEntity<CDOTABaseNPC>(NH2IDX(animMsg->entity()));
+		auto npc = CEntSys::Get()->GetEntity<CDOTABaseNPC>(NH2IDX(animMsg->entity()));
 
 		animations[npc] = {
-			.startTime = GameSystems::GameRules->GetGameTime(),
+			.startTime = CGameRules::Get()->GetGameTime(),
 			.castPoint = animMsg->castpoint() * animMsg->playbackrate(),
 		};
 	}
 	else if (msgHandle->messageID == 522) {
 		auto animMsg = (CDOTAUserMsg_TE_UnitAnimationEnd*)msg;
-		auto npc = Interfaces::EntitySystem->GetEntity<CDOTABaseNPC>(NH2IDX(animMsg->entity()));
+		auto npc = CEntSys::Get()->GetEntity<CDOTABaseNPC>(NH2IDX(animMsg->entity()));
 		animations.erase(npc);
 	}
 

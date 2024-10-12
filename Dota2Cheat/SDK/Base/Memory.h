@@ -6,13 +6,39 @@
 #include "Address.h"
 #include "Function.h"
 
+// Converts IDA-style signatures to codepoints in a string
+static std::string IDAtoBinary(std::string_view combo)
+{
+	const size_t patternLen = (combo.size() + 1) / 3;
+	std::string pattern;
+	pattern.reserve(patternLen);
+
+	int index = 0;
+	for (unsigned int i = 0; i < combo.size(); i++)
+	{
+		if (combo[i] == ' ')
+			continue;
+		else if (combo[i] == '?')
+		{
+			pattern += '\xCC';
+			i += 1;
+		}
+		else
+		{
+			pattern += (char)strtol(&combo[i], 0, 16);
+			i += 2;
+		}
+	}
+	return pattern;
+}
+
 // Utility class for working with memory
 class Memory {
 	// Boyer-Moore-Horspool with wildcards implementation
-	static std::array<size_t, 256> FillShiftTable(const char* pattern, const uint8_t wildcard) {
+	static std::array<size_t, 256> FillShiftTable(std::string_view pattern, const uint8_t wildcard) {
 		std::array<size_t, 256> bad_char_skip = {};
 		size_t idx = 0;
-		const size_t last = strlen(pattern) - 1;
+		const size_t last = pattern.size() - 1;
 
 		// Get last wildcard position
 		for (idx = last; idx > 0 && (uint8_t)pattern[idx] != wildcard; --idx);
@@ -28,61 +54,8 @@ class Memory {
 		return bad_char_skip;
 	}
 
-	static std::string ParseCombo(const std::string& combo)
-	{
-		const size_t patternLen = (combo.size() + 1) / 3;
-		std::string pattern;
-		pattern.reserve(patternLen);
-
-		int index = 0;
-		for (unsigned int i = 0; i < combo.size(); i++)
-		{
-			if (combo[i] == ' ')
-				continue;
-			else if (combo[i] == '?')
-			{
-				pattern += '\xCC';
-				i += 1;
-			}
-			else
-			{
-				char byte = (char)strtol(&combo[i], 0, 16);
-				pattern += byte;
-				i += 2;
-			}
-		}
-		return pattern;
-	}
-
-	static void* PatternScanInModule(const char* module, const char* pattern)
-	{
-		const auto begin = (uintptr_t)GetModuleHandleA(module);
-
-		const auto pDosHeader = PIMAGE_DOS_HEADER(begin);
-		const auto pNTHeaders = PIMAGE_NT_HEADERS((uint8_t*)(begin + pDosHeader->e_lfanew));
-		const auto dwSizeOfImage = pNTHeaders->OptionalHeader.SizeOfImage;
-
-		uint8_t* scanPos = (uint8_t*)begin;
-		const uint8_t* scanEnd = (uint8_t*)(begin + dwSizeOfImage - strlen(pattern));
-
-		const size_t last = strlen(pattern) - 1;
-		const auto bad_char_skip = FillShiftTable(pattern, 0xCC);
-
-		// Search
-		for (; scanPos <= scanEnd; scanPos += bad_char_skip[scanPos[last]])
-			for (size_t idx = last; idx >= 0; --idx) {
-				const uint8_t elem = pattern[idx];
-				if (elem != 0xCC && elem != scanPos[idx])
-					break;
-				if (idx == 0)
-					return scanPos;
-			}
-
-		return nullptr;
-	}
-
 	struct InterfaceInfo {
-		void*(*Create)();
+		void* (*Create)();
 		const char* m_szName;
 		InterfaceInfo* m_pNext;
 	};
@@ -93,11 +66,11 @@ public:
 
 	static void RevertPatches() {
 		static auto NtProtectVirtualMemory = Memory::GetExport("ntdll.dll", "NtProtectVirtualMemory");
-		for (auto& [ pAddr, sequence] : patches) {
+		for (auto& [pAddr, sequence] : patches) {
 			Address addr = pAddr;
 			MEMORY_BASIC_INFORMATION mbi;
 			VirtualQuery(addr, &mbi, sizeof(mbi));
-			
+
 			NtProtectVirtualMemory(GetCurrentProcess(), &mbi.BaseAddress, (unsigned long*)&mbi.RegionSize, PAGE_EXECUTE_READWRITE, &mbi.Protect);
 			memcpy(addr, sequence.data(), sequence.size());
 			NtProtectVirtualMemory(GetCurrentProcess(), &mbi.BaseAddress, (unsigned long*)&mbi.RegionSize, mbi.Protect, &mbi.Protect);
@@ -122,13 +95,50 @@ public:
 			patches[addr] = data;
 	}
 
-	static Address Scan(const std::string& signature, const std::string& moduleName) {
-		auto res = PatternScanInModule(moduleName.c_str(), ParseCombo(signature).c_str());
+	static Address ScanBinary(const std::string& pattern, const std::string& module)
+	{
+		using namespace std::string_view_literals;
 
-		if (!res)
-			LogF(LP_ERROR, "{}: {} | BROKEN SIGNATURE", moduleName, signature);
+		const auto begin = (uintptr_t)GetModuleHandleA(module.data());
+		const auto pNTHeaders = PIMAGE_NT_HEADERS((uint8_t*)(begin + PIMAGE_DOS_HEADER(begin)->e_lfanew));
 
-		return res;
+		// Caching .text sections for maximum performance
+		// Why scan everything when you can scan code alone?
+		static std::unordered_map<std::string, PIMAGE_SECTION_HEADER> textSections;
+
+		auto textSection = textSections[module];
+		if (!textSection) {
+			PIMAGE_SECTION_HEADER pSectionHeader = IMAGE_FIRST_SECTION(pNTHeaders);
+			for (int i = 0; i < pNTHeaders->FileHeader.NumberOfSections; ++i, ++pSectionHeader) {
+				if ((char*)pSectionHeader->Name == ".text"sv) {
+					textSection = textSections[module] = pSectionHeader;
+					break;
+				}
+			}
+		}
+
+		uint8_t* scanPos = (uint8_t*)begin + textSection->VirtualAddress;
+		const uint8_t* scanEnd = (uint8_t*)((uint8_t*)begin + textSection->VirtualAddress + textSection->Misc.VirtualSize - pattern.size());
+
+		const size_t last = pattern.size() - 1;
+		const auto bad_char_skip = FillShiftTable(pattern, 0xCC);
+
+		// Search
+		for (; scanPos <= scanEnd; scanPos += bad_char_skip[scanPos[last]])
+			for (size_t idx = last; idx >= 0; --idx) {
+				const uint8_t elem = pattern[idx];
+				if (elem != 0xCC && elem != scanPos[idx])
+					break;
+				if (idx == 0)
+					return scanPos;
+			}
+
+		return nullptr;
+	}
+
+	// Scans using IDA-style signature
+	static Address Scan(std::string_view signature, const std::string& moduleName) {
+		return ScanBinary(IDAtoBinary(signature), moduleName);
 	}
 
 	template<typename T>
@@ -139,19 +149,19 @@ public:
 		memcpy((void*)dst, (const void*)src, size);
 	}
 
-	template<typename T = void>
-	static T* GetInterface(const char* dllName, const char* interfaceName) {
+	// In these methods we traverse the interface list ourselves
+
+	static Address GetInterface(const char* dllName, const char* interfaceName) {
 		auto CreateInterface = GetExport(dllName, "CreateInterface");
-		return (T*)CreateInterface(interfaceName, nullptr);
+		return CreateInterface(interfaceName, nullptr);
 	}
 
-	template<typename T = void>
-	static T* GetInterfaceBySubstr(const char* dllName, const char* substr) {
-		auto pInterface = *Memory::GetExport<Address>(dllName, "CreateInterface").GetAbsoluteAddress<InterfaceInfo**>(3);
+	static Address GetInterfaceBySubstr(const char* dllName, const char* substr) {
+		auto pInterface = (const InterfaceInfo*)GetExport<Address>(dllName, "CreateInterface").GetAbsoluteAddress(3).Dereference();
 
 		while (pInterface) {
-			if (strstr(pInterface->m_szName, substr))
-				return (T*)pInterface->Create();
+			if (std::string_view(pInterface->m_szName).find(substr) != std::string_view::npos)
+				return pInterface->Create();
 
 			pInterface = pInterface->m_pNext;
 		}
@@ -161,13 +171,13 @@ public:
 
 	template<typename T = Function>
 	// Returns an exported function, if it's available
-	static T GetExport(const char* dllName, const char* exportName) {
-		return T(GetProcAddress(GetModuleHandleA(dllName), exportName));
+	static T GetExport(std::string_view dllName, std::string_view exportName) {
+		return T(GetProcAddress(GetModuleHandleA(dllName.data()), exportName.data()));
 	}
 
 	// Returns a module's base address, for use with RVA
-	static Address GetModule(const char* dllName) {
-		return (void*)GetModuleHandleA(dllName);
+	static Address GetModule(std::string_view dllName) {
+		return (void*)GetModuleHandleA(dllName.data());
 	}
 };
 
@@ -222,3 +232,6 @@ inline bool IsValidCodePtr(T p)
 		return false;
 	return true;
 }
+
+Address FindStaticGameSystem(std::string_view name);
+Address FindReallocatingGameSystem(std::string_view name);

@@ -6,29 +6,22 @@
 #include "../Modules/UI/BlinkRevealer.h"
 #include "../Modules/UI/TPTracker.h"
 #include "../Modules/UI/ParticleMaphack.h"
-#include "../Modules/UI/AbilityESP.h"
+#include "../Modules/UI/AbilityESP/AbilityESP.h"
 #include "../Modules/UI/BarAugmenter.h"
 #include "../Modules/UI/UIOverhaul.h"
 
 #include "../Modules/Hacks/SkinChanger.h"
 #include "../Modules/Hacks/LastHitMarker.h"
-#include "../UI/LoadingMenu.h"
 
 #include "../CheatSDK/VTexDecoders/VTexParser.h"
+#include "../CheatSDK/Shaders.h"
 
 LRESULT WINAPI Hooks::WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	static std::once_flag inputFix;
-
 	KeyHandler.OnWindowMessage(uMsg, wParam);
 
 	if (DrawData.ShowMenu) {
-		ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
-
-		std::call_once(inputFix,
-			CallWindowProcA,
-			DrawData.Dx.oWndProc, hWnd, uMsg, wParam, lParam
-		);
-		return 1;
+		bool k = ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam);
+		if (!k) return !k;
 	}
 
 	return CallWindowProcA(DrawData.Dx.oWndProc, hWnd, uMsg, wParam, lParam);
@@ -42,7 +35,7 @@ void InitImGui() {
 	ImGui_ImplWin32_Init(DrawData.Dx.Window);
 	ImGui_ImplDX11_Init(DrawData.Dx.pDevice, DrawData.Dx.pContext);
 
-	Log(LP_INFO, "Loading fonts...");
+	LogI("Loading fonts...");
 
 	// ImGui takes ownership of the loaded memory by default
 	// Of course, we don't want to try to delete a constant array and get a SEGFAULT
@@ -95,7 +88,7 @@ long Hooks::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 	}
 
 	auto& io = ImGui::GetIO();
-	static auto defaultFont = io.Fonts->AddFontDefault();
+	static auto defaultFont = io.Fonts->AddFontFromMemoryTTF((void*)Fonts::Roboto, IM_ARRAYSIZE(Fonts::Roboto), 18.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
@@ -103,20 +96,15 @@ long Hooks::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 
 	texManager.ExecuteLoadCycle();
 
-#ifdef _DEBUG
-	// Pages::AutoPickHeroGrid::Draw();
-#endif // _DEBUG
-
 	ImGui::PushFont(DrawData.Fonts["MSTrebuchet"][24]);
 	if (
-		Interfaces::GameUI->GetUIState() == DOTA_GAME_UI_DOTA_INGAME
+		CGameUI::Get()->GetUIState() == DOTA_GAME_UI_DOTA_INGAME
 		&& ctx.gameStage == GameStage::IN_GAME
 		&& ctx.localHero
 		) {
-
-		Modules::AbilityESP.DrawESP();
-		Modules::UIOverhaul.DrawBars();
-		Modules::TPTracker.DrawMapTeleports();
+		Modules::AbilityESP.Draw();
+		Modules::UIOverhaul.Draw();
+		Modules::TPTracker.Draw();
 		Modules::LastHitMarker.Draw();
 		Modules::BlinkRevealer.Draw();
 		Modules::ParticleMaphack.Draw();
@@ -128,25 +116,8 @@ long Hooks::hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 
 	ImGui::PushFont(defaultFont);
 
-	//ImGui::Begin("Netvar Writes");
-	//{
-	//	if (ImGui::Button("Clear writes"))
-	//		writes.clear();
-
-	//	std::lock_guard<std::mutex> lk(writeMutex);
-	//	for (const auto& [k, v] : writes) {
-	//		ImGui::Text(std::format("{}: W {} LV {}", k, v.writeCount, v.lastVal).c_str());
-	//	}
-	//}
-	//ImGui::End();
-
-#ifndef _DEBUG
-	if (UIData::uiState == CheatUIState::LaunchMenu)
-		Menus::loadMenu.DrawLaunchDialogue();
-	else
-#endif
-		if (DrawData.ShowMenu)
-			Pages::MainMenu::Draw();
+	if (DrawData.ShowMenu)
+		Pages::MainMenu::Draw();
 
 	ImGui::PopFont();
 

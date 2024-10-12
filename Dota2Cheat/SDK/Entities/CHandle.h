@@ -1,40 +1,53 @@
 #pragma once
 #include <cstdint>
-#include "../../CheatSDK/Globals/Interfaces.h"
+
+class CBaseEntity;
 
 template<typename T = CBaseEntity>
 struct CHandle {
 	constexpr static uint32_t INVALID_HANDLE = 0XFFFFFFFF;
 
-	uint32_t val = INVALID_HANDLE;
-	operator uint32_t() {
-		return val;
-	}
-	uint32_t Index() {
+	uint32_t val;
+
+	CHandle() : val(INVALID_HANDLE) {}
+	CHandle(uint32_t val) : val(val) {}
+
+	uint32_t Index() const {
 		return val & 0x7fff;
 	}
-	T* Entity() {
-		return Interfaces::EntitySystem->GetEntity<T>(Index());
+
+	explicit operator uint32_t() const {
+		return val;
 	}
-	operator T* () {
+
+	explicit operator bool() const {
+		return IsValid();
+	}
+
+	T* Entity() const;
+
+	operator T* () const {
 		return Entity();
 	}
 
-	T* operator->() {
+	T* operator->() const {
 		return Entity();
 	}
 
-	bool IsValid() {
+	T* operator*() const {
+		return Entity();
+	}
+
+	bool IsValid() const {
 		return val != INVALID_HANDLE;
 	}
 
-	bool operator==(const CHandle<T> other) {
+	bool operator==(const CHandle<T> other) const {
 		return other.val == val;
-	}
-
-	CHandle<T>& operator=(uint32_t val) {
-		this->val = val;
-		return *this;
 	}
 };
 
+template<typename T>
+std::ostream& operator<<(std::ostream& os, CHandle<T> h) {
+	return os << "H[" << (*h) << "]";
+}

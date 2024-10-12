@@ -1,7 +1,8 @@
 #include "CRenderGameSystem.h"
-#include "../../CheatSDK/include.h"
+#include "../Interfaces/CEngineServiceMgr.h"
+#include "../Base/Logging.h"
 
-bool CRenderGameSystem::GetVectorInScreenSpace(const Vector& point, Vector2D& screen)
+bool CRenderGameSystem::GetVectorInScreenSpace(const Vector& point, Vector2D& screen) const
 {
 	const float* worldToSurface = WorldToProjectionMatrix();
 
@@ -20,17 +21,18 @@ bool CRenderGameSystem::GetVectorInScreenSpace(const Vector& point, Vector2D& sc
 	static int resolut[2] = { 0 };
 	if (!resolut[0] || !resolut[1])
 	{
-		if (!Interfaces::Engine)
-			return false;
+		CEngineServiceMgr::Get()->GetEngineSwapChainSize(&resolut[0], &resolut[1]);
 
-		// CEngineClient vfunc 49 GetScreenSize redirects to this
-		static auto engineServiceMgr = Memory::GetInterfaceBySubstr<VClass>("engine2.dll", "EngineServiceMgr");
-		// curiously, THIS index does not change
-		engineServiceMgr->CallVFunc<24>(&resolut[0], &resolut[1]);
+		if (resolut[0] == 0 || resolut[1] == 0) {
+			static std::once_flag f;
+			static auto fName = __FUNCTION__;
+			std::call_once(f, [] { LogFE("{}: {}", fName, "GetEngineSwapChainSize returned incorrect data!"); });
+			return false;
+		}
 	}
 
-	screen.x = resolut[0] / 2.f + screen.x * resolut[0] / 2.f + 0.5f;
-	screen.y = resolut[1] / 2.f - screen.y * resolut[1] / 2.f + 0.5f;
+	screen.x = (resolut[0] + screen.x * resolut[0] + 1) / 2.f;
+	screen.y = (resolut[1] - screen.y * resolut[1] + 1) / 2.f;
 
 	return true;
 }

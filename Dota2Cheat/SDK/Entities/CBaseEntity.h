@@ -1,5 +1,5 @@
 #pragma once
-#include "../Protobufs/dota_shared_enums.pb.h"
+#include <dota_shared_enums.pb.h>
 
 
 #include "../Base/VClass.h"
@@ -9,12 +9,13 @@
 #include "../Base/Color.h"
 
 #include "../Netvars.h"
+#include "../VMI.h"
 
 #include "CEntityIdentity.h"
 
 class CDOTAPlayerController;
 
-struct CSchemaClassBinding {
+struct CEntSchemaClassBinding {
 	const char
 		* binaryName, // ex: C_DOTA_Unit_Hero_Nevermore
 		* serverName; // ex: CDOTA_Unit_Hero_Nevermore
@@ -32,10 +33,11 @@ public:
 	struct CModelState : public NormalClass {
 		FIELD(uint64_t, MeshGroupMask, Netvars::CModelState::m_MeshGroupMask);
 		GETTER(const char*, GetModelName, Netvars::CModelState::m_ModelName);
-		auto GetModel() {
+		NormalClass* GetModel() const {
 			return *Member<NormalClass**>(Netvars::CModelState::m_hModel);
 		};
 	};
+
 	struct CSkeletonInstance : public VClass {
 		// reversed from xref: "CBaseModelEntity::SetBodygroup(%d,%d) failed: CBaseModelEntity has no model!\n"
 		// last two subs are get and set
@@ -43,8 +45,8 @@ public:
 		IGETTER(CModelState, GetModelState, Netvars::CSkeletonInstance::m_modelState)
 	};
 
-	CSchemaClassBinding* SchemaBinding() {
-		return CallVFunc<0x118 / 8, CSchemaClassBinding*>();
+	CEntSchemaClassBinding* SchemaBinding() const {
+		return GetVFunc(VMI::CBaseEntity::GetSchemaBinding).Call<CEntSchemaClassBinding*>();
 	};
 
 	inline static void(__fastcall* OnColorChanged)(void*) = {};
@@ -57,17 +59,18 @@ public:
 	GETTER(CHandle<CDOTAPlayerController>, GetOwnerEntityHandle, Netvars::C_BaseEntity::m_hOwnerEntity);
 	GETTER(CSkeletonInstance*, GetGameSceneNode, Netvars::C_BaseEntity::m_pGameSceneNode);
 
-	const char* GetModelName() {
+	const char* GetModelName() const {
 		// og's explanation:
 		// CModelState has 3 CStrongHandle pointers at 0xA0 and below
 		// These strong handles have a model pointer and its name
 		return GetGameSceneNode()->GetModelState()->GetModelName();
 	}
 
-	bool IsSameTeam(CBaseEntity* other) {
+	bool IsSameTeam(CBaseEntity* other) const {
 		return GetTeam() == other->GetTeam();
 	}
-	uint32_t GetHandle() {
+
+	uint32_t GetHandle()  const {
 		auto id = GetIdentity();
 		if (!IsValidReadPtr(id))
 			return INVALID_HANDLE;
@@ -75,7 +78,7 @@ public:
 	}
 
 	// Returns the index of this entity in the entity system
-	uint32_t GetIndex() {
+	uint32_t GetIndex()  const {
 		return H2IDX(GetHandle());
 	}
 
@@ -85,24 +88,24 @@ public:
 		OnColorChanged(this);
 	}
 
-	float& ModelScale() {
+	float& ModelScale() const {
 		return Member<VClass*>(Netvars::C_BaseEntity::m_pGameSceneNode)
 			->Field<float>(Netvars::CGameSceneNode::m_flScale);
 	}
 
-	Vector GetPos() {
+	Vector GetPos() const {
 		return Member<VClass*>(Netvars::C_BaseEntity::m_pGameSceneNode)
 			->Member<Vector>(Netvars::CGameSceneNode::m_vecAbsOrigin);
 	}
 
 	// In degrees from 180 to -180(on 0 it looks right)
-	float GetRotation() {
+	float GetRotation() const {
 		return Member<VClass*>(Netvars::C_BaseEntity::m_pGameSceneNode)
 			->Member<Vector>(Netvars::CGameSceneNode::m_angRotation).y;
 	}
 
 	// Gets the point in front of the entity at the specified distance
-	Vector GetForwardVector(float dist) {
+	Vector GetForwardVector(float dist) const {
 		auto pos = GetPos();
 		float rotation = GetRotation() * M_PI / 180;
 

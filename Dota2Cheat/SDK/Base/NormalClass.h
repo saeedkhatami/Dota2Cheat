@@ -5,22 +5,18 @@
 class NormalClass {
 public:
 	template<typename T>
-	T& Field(int offset) const {
-		if (!IsValidReadPtr((uintptr_t)this + offset))
-			throw "VClass::Field access violation";
+	T& Field(ptrdiff_t offset) const {
 		return *(T*)((uintptr_t)this + offset);
 	}
 
 	template<typename T>
-	T Member(int offset/*, T defaultValue = T{}*/) const {
-		if (!IsValidReadPtr((uintptr_t)this + offset))
-			return T{};
+	T Member(ptrdiff_t offset) const {
 		return *(T*)((uintptr_t)this + offset);
 	}
 
 	// Gets a pointer to a type via the offset but does not dereference it
 	template<typename T>
-	T* MemberInline(int offset) const {
+	T* MemberInline(ptrdiff_t offset) const {
 		return (T*)((uintptr_t)this + offset);
 	}
 };

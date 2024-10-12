@@ -1,10 +1,10 @@
 #pragma once
 #include "../../pch.h"
-#include "../../SDK/Protobufs/dota_usermessages.pb.h"
+#include <dota_usermessages.pb.h>
 #include "../../CheatSDK/include.h"
 #include "../MListeners.h"
 
-// particles\ui_mouseactions\range_finder_tower_aoe.vpcf
+// particles/ui_mouseactions/range_finder_tower_aoe.vpcf
 // Point 0: nothing
 // Point 2: coord of the second end of the dashed line
 // Point 3: X is boolean, controls some point in the center
@@ -33,7 +33,6 @@ namespace Modules {
 		};
 
 		std::map<int32_t, ParticleWrapper> TrackedProjectiles{};
-		std::map<int32_t, LinearProjectile> linearProjectiles{};
 
 
 		struct AbilityTrajectoryConfig {

@@ -19,5 +19,10 @@ class CDOTA_MinimapObjectManager : public VClass
 {
 public:
 	GETTER(CUtlVector<MinimapObject>, GetMinimapObjects, 0x18);
-};
 
+	static CDOTA_MinimapObjectManager* Get() {
+		static CDOTA_MinimapObjectManager* inst = FindStaticGameSystem("CDOTA_MinimapObjectManager");
+		return inst;
+	}
+
+};

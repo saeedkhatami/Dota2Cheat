@@ -1,6 +1,7 @@
 #include "DotaPlusUnlocker.h"
 #include "../../CheatSDK/Config.h"
 #include "../../pch.h"
+#include <dota_gcmessages_common.pb.h>
 
 // rebuilt from xref: "Failed to find CDOTAGameAccountPlus"
 
@@ -8,7 +9,8 @@ void Modules::M_DotaPlusManager::UpdateDotaPlusStatus() {
 	if (!updateSubscription)
 		return;
 
-	static auto inventory = Interfaces::GCClient->GetSOListeners()[1];
+
+	static auto inventory = CGCClient::Get()->GetSOListeners()[1];
 	static auto objCache = inventory->GetSOCache();
 
 	for (auto& typeCache : objCache->GetTypeCacheList()) {
@@ -16,15 +18,22 @@ void Modules::M_DotaPlusManager::UpdateDotaPlusStatus() {
 			continue;
 
 		updateSubscription = false;
-
+		
 		auto proto = (CSODOTAGameAccountPlus*)typeCache->GetProtobufSO()->GetPObject();
 
-		if (proto->plus_status() == Config::Changer::UnlockDotaPlus)
+		if (!initialPlusStatus.has_value())
+			initialPlusStatus = (bool)proto->plus_status();
+
+		// Do not disable an already present subscription even if the config says no
+		if (*initialPlusStatus && !Config::Changer::UnlockDotaPlus)
+			return;
+
+		if ((bool)proto->plus_status() == Config::Changer::UnlockDotaPlus)
 			return;
 
 		proto->set_plus_flags(!Config::Changer::UnlockDotaPlus);
 		proto->set_plus_status(Config::Changer::UnlockDotaPlus);
-		Interfaces::GCClient->DispatchSOUpdated(objCache->GetOwner(), typeCache->GetProtobufSO(), eSOCacheEvent_Incremental);
+		CGCClient::Get()->DispatchSOUpdated(objCache->GetOwner(), typeCache->GetProtobufSO(), eSOCacheEvent_Incremental);
 
 		//for(int i = 1; i <= 124; i++)
 		//	SetHeroXP(i, 72050);

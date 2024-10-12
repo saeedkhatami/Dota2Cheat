@@ -1,51 +1,15 @@
 #include "MainMenu.h"
-#include "../../Modules/UI/AbilityESP.h"
 #include "../../Modules/Hacks/SkinChanger.h"
 #include "../../Modules/UI/UIOverhaul.h"
 #include "../../Modules/Hacks/DotaPlusUnlocker.h"
+#include "../../Modules/Hacks/TreeChanger.h"
+#include "DebugMenu.h"
 
 void Pages::MainMenu::Draw() {
 	ImGui::Begin("Main", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
-	static auto& cl_particle_log_creates = Interfaces::CVar->CVars["cl_particle_log_creates"].m_pVar->value.boolean;
-	static auto net_showreliable = Interfaces::CVar->CVars["net_showreliable"].m_pVar;
-	static bool net_showreliable_bool = strcmp(net_showreliable->value.str, "0");
-#if defined(_DEBUG) && !defined(_TESTING)
-	ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-
-	ImGui::Checkbox("Changing", &DoChanging);
-
-	if (ImGui::Checkbox("net_showreliable", &net_showreliable_bool))
-		net_showreliable->SetStrVal(net_showreliable_bool);
-
-	ImGui::Checkbox("cl_particle_log_creates", &cl_particle_log_creates);
-
-	ImGui::InputText("Sound name", &uiSoundBuf);
-
-	if (ImGui::Button("PLAY SOUND"))
-		PlayUISoundScript(uiSoundBuf);
-
-	if (ImGui::Button("Log Entities"))
-		LogEntities();
-
-	if (ImGui::Button("Log Inventory")) {
-		auto selected = ctx.localPlayer->GetSelectedUnits();
-		auto ent = Interfaces::EntitySystem->GetEntity<CDOTABaseNPC>(selected[0]);
-		LogInvAndAbilities(ent);
-	}
-
-	if (ImGui::Button("Log Modifiers")) {
-		auto selected = ctx.localPlayer->GetSelectedUnits();
-		auto ent = Interfaces::EntitySystem->GetEntity<CDOTABaseNPC>(selected[0]);
-		LogModifiers(ent);
-	}
-
-	ImGui::InputInt("ItemDef ID", &itemDefId);
-	if (ImGui::Button("Create item"))
-		Modules::SkinChanger.QueueAddItem(itemDefId);
-
-
-	ImGui::End();
+#ifdef _DEBUG
+	DebugMenu();
 #endif // _DEBUG
 
 	if (ctx.gameStage == GameStage::IN_GAME)
@@ -53,19 +17,14 @@ void Pages::MainMenu::Draw() {
 			circleMenuVisible = !circleMenuVisible;
 
 	if (ImGui::TreeNode("AutoAccept")) {
-		ImGui::Checkbox("Enabled", &Config::AutoAccept::Enabled);
-		if (Config::AutoAccept::Enabled) {
+		ImGui::Checkbox("Enable", &Config::AutoAccept::Enabled);
+		if (Config::AutoAccept::Enabled)
 			ImGui::SliderInt("Delay", &Config::AutoAccept::Delay, 0, 6);
-			//ImGui::Checkbox("Send telegram notifications", &Config::AutoAccept::SendTelegramNotifications);
-			//if (Config::AutoAccept::SendTelegramNotifications) {
-			//	ImGui::InputUInt64("Telegram ID", &Config::API::TelegramID);
-			//	ImGui::SameLine(); HelpMarker("First, start the bot at t.me/dotacheatnotifybot\nThen get your ID at t.me/getmyid_bot");
-			//}
-		}
+
 		ImGui::TreePop();
 	}
+
 	if (ImGui::TreeNode("Bars")) {
-		ImGui::Checkbox("Manabars", &Config::Bars::ManaBars);
 		ImGui::Checkbox("HP amount on healthbar", &Config::Bars::HPNumbers);
 		ImGui::TreePop();
 	}
@@ -89,7 +48,7 @@ void Pages::MainMenu::Draw() {
 		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Changer")) {
+	if (ImGui::TreeNode("Changer")) {
 
 		//ImGui::InputText("Rich Presence status", &rpStatusBuf);
 		//if (CheatGui::Button("Apply status"))
@@ -99,7 +58,7 @@ void Pages::MainMenu::Draw() {
 			Modules::DotaPlusManager.QueueUpdate();
 		};
 		if (ImGui::Checkbox("Unlock emoticons", &Config::Changer::UnlockEmoticons)) {
-			static auto dota_hud_chat_enable_all_emoticons = Interfaces::CVar->CVars["dota_hud_chat_enable_all_emoticons"].m_pVar;
+			static auto dota_hud_chat_enable_all_emoticons = CCVar::Get()->CVars["dota_hud_chat_enable_all_emoticons"].m_pVar;
 			dota_hud_chat_enable_all_emoticons->value.boolean = Config::Changer::UnlockEmoticons;
 		};
 		// https://github.com/SK68-ph/Shadow-Dance-Menu
@@ -107,14 +66,15 @@ void Pages::MainMenu::Draw() {
 		if (ImGui::Combo("Tree Models", &Config::Changer::TreeModelIdx, UIData::TreeNameList, IM_ARRAYSIZE(UIData::TreeNameList))
 			&& ctx.gameStage == GameStage::IN_GAME) {
 			if (Config::Changer::TreeModelIdx != 0)
-				Modules::TreeChanger.QueueModelUpdate(UIData::TreeModelList[Config::Changer::TreeModelIdx - 1]);
+				Modules::TreeChanger.QueueModelUpdate(Config::Changer::TreeModelIdx - 1);
 			else
 				Modules::TreeChanger.QueueModelRestore();
 		}
-		// credits to the screenshot https://yougame.biz/threads/283404/
-		// and to Wolf49406 himself
+		// credits to Wolf49406 
 		// should've figured out it's controlled by a convar like the weather :)
 		ImGui::Combo("River paint", &Config::Changer::RiverListIdx, RiverList, IM_ARRAYSIZE(RiverList));
+
+		ImGui::TreePop();
 	};
 	if (ImGui::TreeNode("Snatcher")) {
 		ImGui::Checkbox("Bounty runes", &Config::AutoPickUpRunes);
@@ -126,7 +86,8 @@ void Pages::MainMenu::Draw() {
 
 		static const char* LevelCounterTypes[] = {
 			"Bars",
-			"Number"
+			"Numbers - Basic",
+			"Numbers - Immersive"
 		};
 
 		static const char* ItemPanelTypes[] = {
@@ -135,7 +96,12 @@ void Pages::MainMenu::Draw() {
 		};
 
 		ImGui::Checkbox("Enable", &Config::AbilityESP::Enabled);
-		ImGui::Checkbox("Include allied heroes", &Config::AbilityESP::ShowAllies);
+
+		ImGui::Checkbox("Draw on allies", &Config::AbilityESP::ShowAllies);
+
+		ImGui::Checkbox("Apply icon modifiers", &Config::AbilityESP::ApplyIconModifiers);
+		ImGui::SameLine(); HelpMarker("Heroes with icon-changing items equipped will also have changed icons in the ESP");
+
 		ImGui::Checkbox("Show decimals in cooldowns", &Config::AbilityESP::ShowCooldownDecimals);
 		ImGui::Combo("Level counter type", &Config::AbilityESP::LevelCounterType, LevelCounterTypes, IM_ARRAYSIZE(LevelCounterTypes));
 		ImGui::Combo("Item panel type", &Config::AbilityESP::ItemPanelType, ItemPanelTypes, IM_ARRAYSIZE(ItemPanelTypes));
@@ -151,9 +117,11 @@ void Pages::MainMenu::Draw() {
 		ImGui::SameLine(); HelpMarker(
 			"If your hero has a nuke spell, its icon will be displayed near the enemy's healthbar, signifying whether you can kill them with it. "
 			"If you can't, it shows how much health is left until you can kill them");
-		ImGui::SliderFloat("Kill indicator scale", &Config::Indicators::KillScale, 1, 1.4, "%.1f");
+		ImGui::SliderFloat("Kill indicator scale", &Config::Indicators::KillScale, 1, 1.4f, "%.1f");
 		ImGui::TreePop();
 	}
+
+#ifdef _DEBUG
 	if (ImGui::TreeNode("UIOverhaul")) {
 		if (ImGui::Checkbox("Networth panel", &Config::UIOverhaul::NetworthPanel))
 			Modules::UIOverhaul.QueueUpdateNetworthPanel();
@@ -161,6 +129,8 @@ void Pages::MainMenu::Draw() {
 		ImGui::SameLine(); HelpMarker("Shows HP and Mana bars for enemies in the top bar. Like pressing Alt does for your allies");
 		ImGui::TreePop();
 	}
+#endif
+
 	if (ImGui::TreeNode("IllusionESP")) {
 		ImGui::Checkbox("Enable", &Config::IllusionColoring::Enabled);
 
@@ -231,11 +201,11 @@ void Pages::MainMenu::Draw() {
 	ImGui::SameLine(); HelpMarker("Shows a dot on creeps when you can last hit/deny them");
 
 	ImGui::Checkbox("Perfect Blink", &Config::PerfectBlink);
-	ImGui::Checkbox("Prevent bad casts", &Config::BadCastPrevention);
-	ImGui::SameLine(); HelpMarker("Detects if there are enemy heroes within range of some AOE skills to prevent bad casts. e.g, Chronosphere, Black hole, Reverse polarity, etc.");
+	ImGui::Checkbox("Bad Cast Prevention", &Config::BadCastPrevention);
+	ImGui::SameLine(); HelpMarker("Does not allow casting abilities like Reverse Polarity or Blackhole when there are no enemies in range.");
 
 	ImGui::Checkbox("Redirect illusion casts", &Config::CastRedirection);
-	ImGui::SameLine(); HelpMarker("You cast something on an illusion - it aims for the real hero(if they're in range, of course)");
+	ImGui::SameLine(); HelpMarker("You cast something on an illusion - it aims for the real hero(if they're in range)");
 
 	ImGui::SliderFloat("Camera distance", &Config::CameraDistance, 1200, 3000, "%.0f");
 
@@ -243,7 +213,6 @@ void Pages::MainMenu::Draw() {
 		d2c.shouldUnload = true;
 
 	ImGui::End();
-
 	if (circleMenuVisible) {
 		ImGui::Begin("C I R C L E S", &circleMenuVisible, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::InputInt("Circle radius", &Config::CircleRadius, 1, 10);
@@ -253,7 +222,7 @@ void Pages::MainMenu::Draw() {
 			Vector color = Config::CircleRGB * 255;
 			Vector radius{ static_cast<float>(Config::CircleRadius), 255, 0 };
 
-			auto particle = GameSystems::ParticleManager->CreateParticle(
+			auto particle = CParticleMgr::Get()->CreateParticle(
 				"particles/ui_mouseactions/selected_ring.vpcf",
 				PATTACH_ABSORIGIN_FOLLOW,
 				ctx.localHero

@@ -1,8 +1,8 @@
 #include "BarAugmenter.h"
 
-bool Modules::BarAugmenter::CanDraw(CDOTABaseNPC_Hero* hero) {
-	return IsValidReadPtr(hero)
-		&& IsValidReadPtr(hero->GetIdentity())
+bool Modules::M_BarAugmenter::CanDraw(CHero* hero) {
+	return hero
+		&& hero->GetIdentity()
 		&& !hero->GetIdentity()->IsDormant()
 		&& !hero->IsSameTeam(ctx.localHero)
 		&& !hero->IsIllusion()

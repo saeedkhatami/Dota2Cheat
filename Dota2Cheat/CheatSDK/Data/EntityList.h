@@ -6,6 +6,7 @@
 
 enum class CreepType {
 	NotCreep,
+	Neutral,
 	LaneMelee,
 	LaneRanged,
 	Siege
@@ -44,10 +45,11 @@ struct IEntityListListener {
 	virtual void OnEntityRemoved(const EntityWrapper& ent) {};
 };
 
+// TODO: split entity lists into fields like with VTexDirs
 inline class CEntityList : public IEntityListener {
 	std::map<uint32_t, EntityWrapper> Entities;
 
-	std::vector<IEntityListListener*> Listeners;
+	inline static std::vector<IEntityListListener*> Listeners;
 
 	void DispatchEntityAdded(const EntityWrapper& ent) {
 		for (auto l : Listeners)
@@ -59,19 +61,23 @@ inline class CEntityList : public IEntityListener {
 			l->OnEntityRemoved(ent);
 	}
 
-public:
 	std::mutex mEntities;
+public:
+	template<typename T = CBaseEntity>
+	T* Get(uint32_t id) const {
+		return Entities.contains(id) ? (T*)Entities.at(id).ent : nullptr;
+	}
 
 	void OnEntityCreated(CBaseEntity* ent) override;
 
 	void OnEntityDeleted(CBaseEntity* ent) override;
 
-	void AddListener(IEntityListListener& l) {
+	static void AddListener(IEntityListListener& l) {
 		Listeners.push_back(&l);
 	}
 
 	template<size_t lSize>
-	void AddListeners(IEntityListListener* const (&_listeners)[lSize]) {
+	static void AddListeners(IEntityListListener* const (&_listeners)[lSize]) {
 		for (auto l : _listeners)
 			Listeners.push_back(l);
 	}
@@ -145,7 +151,7 @@ public:
 				func(wrap);
 	}
 	template<typename T>
-	void ForEach(std::function<void(T*)> func) {
+	void ForEach(std::function<void(T*)> func)  {
 		std::lock_guard<std::mutex> lock(mEntities);
 
 		EntityType type = EntityType::Undefined;
@@ -161,8 +167,8 @@ public:
 				func(wrap);
 	}
 
-	bool IsEntityOfType(CBaseEntity* ent, EntityType type) {
-		return Entities.contains(ent->GetIndex()) && Entities[ent->GetIndex()].type == type;
+	bool IsEntityOfType(CBaseEntity* ent, EntityType type) const {
+		return Entities.contains(ent->GetIndex()) && Entities.at(ent->GetIndex()).type == type;
 	}
 
 #define ISOFTYPE_TEMPLATE(name, type) bool name(CBaseEntity* ent) { \

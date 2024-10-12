@@ -3,7 +3,7 @@
 #include "../../Base/CUtlVector.h"
 #include "../../Base/Definitions.h"
 #include "ItemSchema.h"
-#include "../../Protobufs/base_gcmessages.pb.h"
+#include <base_gcmessages.pb.h>
 
 typedef uint8_t	style_index_t;
 typedef uint16_t item_definition_index_t;
@@ -12,7 +12,7 @@ class CEconItem : public VClass {
 	void* vmt2;
 public:
 	auto GetItemDef() {
-		return MemberInline<VClass>(0x8)->CallVFunc<0x58/8, CDOTAItemDefinition*>();
+		return MemberInline<VClass>(8)->CallVFunc<11, CDOTAItemDefinition*>();
 	}
 
 	inline static void (*DeserializeFromProtobufItemFunc)(CEconItem*, CSOEconItem*);

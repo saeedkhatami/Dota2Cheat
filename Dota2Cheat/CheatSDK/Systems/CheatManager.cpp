@@ -1,6 +1,7 @@
 #include "CheatManager.h"
 
 #include <fstream>
+#include <MinHook.h>
 
 #include "../Config.h"
 #include "TextureManager.h"
@@ -12,28 +13,66 @@
 #include "../../Modules/Utility/CVarSpoofer.h"
 #include "../../Modules/Utility/CVarSpoofer.h"
 #include "../../UI/Pages/AutoPickSelectionGrid.h"
+#include "../Globals/VMTDB.h"
+#include "../Tables.h"
+#include "../../Modules/UI/AbilityESP/AbilityESP.h"
+
+void CCheatManager::LoadVMI() {
+	LogFI("Loading VM indices from {}", cheatFolderPath + "\\vmt.json");
+	VMDB::LoadFromFile(cheatFolderPath + "\\vmt.json");
+	VMDB::ParseMap(VMI::bindings);
+}
 
 void CCheatManager::LoadGameSpecific() {
-	// Allows VPK mods
-	// IDK what became of that piece of code
-	//if (auto gi = Memory::Scan("74 ? 84 C9 75 ? 83 BF", "client.dll"))
-	//	Memory::Patch(gi, { 0xEB });
+	LogFI("Loading signatures from {}", cheatFolderPath + "\\signatures.json");
+	SignatureDB::LoadSignaturesFromFile(cheatFolderPath + "\\signatures.json");
+	Signatures::FindSignatures();
+
+	LoadVMI();
 
 	// Disables gameoverlayrenderer64's WINAPI hook checks
-	if (auto enableVACHooks = Memory::Scan("75 04 84 DB", "gameoverlayrenderer64.dll"))
-		enableVACHooks
-		.Offset(6)
+	// e. g. they track the use of VirtualProtect(Ex) with PAGE_EXECUTE_READWRITE specifically
+	if (auto enableWinAPIHooks = Memory::Scan("76 0A 45 84 FF", "gameoverlayrenderer64.dll"))
+		enableWinAPIHooks
+		.Offset(0xC)
 		.GetAbsoluteAddress(2, 7)
 		.Set(false);
 
-	Interfaces::FindInterfaces();
+	LogI("[ INTERFACES ]");
 
-	Interfaces::CVar->DumpConVarsToMap();
+	tables::PrettyPrint({
+		{ "CSource2Client", CSource2Client::Get()},
+		{ "CGameEntitySystem", CEntSys::Get() },
+		{ "CGCClient", CGCClient::Get() },
+		{ "CCVar", CCVar::Get() },
+		{ "CResourceSystem", CResourceSystem::Get() },
+		{ "CBaseFileSystem", CFileSys::Get() },
+		{ "CGameUI", CGameUI::Get() },
+		{ "CSoundOpSystem", CSoundOpSys::Get() },
+		{ "CInputService", CInputService::Get() },
+
+		{ "CPanoramaUIEngine", CPanoramaUIEngine::Get() },
+		{ "CUIEngineSource2", CUIEngine::Get() },
+
+		{ "INetworkClientService", INetworkClientService::Get()},
+		{ "CNetworkMessages", CNetworkMessages::Get() },
+		{ "CFlattenedSerializers", CFlattenedSerializers::Get() },
+
+		{ "ISteamClient", ISteamClient::Get() },
+		{ "ISteamGameCoordinator", ISteamGC::Get() },
+
+		// Unused but pertinent interfaces
+		{ "CEngineClient", Memory::GetInterfaceBySubstr("engine2.dll", "Source2EngineToClient0") },
+		{ "CSchemaSystem", Memory::GetInterfaceBySubstr("schemasystem.dll", "SchemaSystem") },
+		});
+
+	CCVar::Get()->DumpConVarsToMap();
 #ifdef _DEBUG
-	Interfaces::CVar->UnlockHiddenConVars();
+	CCVar::Get()->UnlockHiddenConVars();
 #endif
+	//Modules::CVarSpoofer.SpoofVar("r_farz");
 
-#ifndef _DEBUG
+#ifndef _DEBUG 
 	Modules::CVarSpoofer.SpoofVars(
 		"dota_camera_distance",
 		"r_farz",
@@ -44,38 +83,41 @@ void CCheatManager::LoadGameSpecific() {
 	);
 #endif
 
-	Interfaces::CVar->CVars["dota_hud_chat_enable_all_emoticons"].m_pVar->value.boolean = Config::Changer::UnlockEmoticons;
+	CCVar::Get()->CVars["dota_hud_chat_enable_all_emoticons"].m_pVar->value.boolean = Config::Changer::UnlockEmoticons;
 
-	SignatureDB::LoadSignaturesFromFile(cheatFolderPath + "\\signatures.json");
-
-	Signatures::FindSignatures();
 	GameSystems::FindGameSystems();
 
-#if defined(_DEBUG) && !defined(_TESTING)
-	Log(LP_DATA, "ItemSchema: ", Signatures::GetItemSchema());
-#endif
+//#if defined(_DEBUG) && !defined(_TESTING)
+//	LogD("ItemSchema: ", Signatures::GetItemSchema());
+//#endif
 
 	Modules::BarAugmenter.Init();
 
 	Hooks::InstallHooks();
+	Hooks::InstallAuxiliaryHooks();
 
 	EventManager.InstallListeners();
 
 	EntityList.AddListener(Modules::IllusionESP);
+	EntityList.AddListener(Modules::AbilityESP);
 
-	CBaseEntity::OnColorChanged = Interfaces::NetworkMessages->FindCallback("OnColorChanged");
+	CBaseEntity::OnColorChanged = CNetworkMessages::Get()->FindCallback("OnColorChanged");
 }
 
 void CCheatManager::LoadFiles() {
 	if (auto fin = std::ifstream(cheatFolderPath + "\\config\\base.json")) {
-		Config::cfg.LoadConfig(fin);
+		Config::cfg.LoadFromFile(fin);
 		fin.close();
 
-		Log(LP_INFO, "Loaded config from ", cheatFolderPath, "\\config\\base.json\n");
+		LogI("Loaded config from ", cheatFolderPath, "\\config\\base.json\n");
 	}
+	locale.Init(Config::Locale);
 }
 
 void CCheatManager::Initialize(HMODULE hModule) {
+	// Initialize MinHook.
+	if (MH_Initialize() != MH_OK)
+		FreeLibrary(hModule);
 
 	this->hModule = hModule;
 	AllocConsole();
@@ -84,19 +126,19 @@ void CCheatManager::Initialize(HMODULE hModule) {
 	// don't you dare touch this line
 	Log(LP_NONE, "works!");
 
-	LogI( "Initializing...");
+	LogI("Initializing...");
 	FindCheatFolder();
 
 	Config::cfg.SetupVars();
+	LoadFiles();
 	LoadGameSpecific();
 
-	LoadFiles();
-	LogI( "Initialization complete!");
+	LogI("Initialization complete!");
 }
 
 void CCheatManager::SaveConfig() {
 	if (auto fout = std::ofstream(cheatFolderPath + "\\config\\base.json")) {
-		Config::cfg.SaveConfig(fout);
+		Config::cfg.SaveToFile(fout);
 		fout.close();
 	};
 }
@@ -111,13 +153,13 @@ void CCheatManager::Unload() {
 	Modules::TargetedSpellHighlighter.OnDisableLinken();
 	EventManager.ClearListeners();
 
-	Hooks::RemoveHooks();
+	Hooks::RemoveAuxiliaryHooks();
 	Memory::RevertPatches();
 	MH_Uninitialize();
 	if (DrawData.Dx.Window)
 		SetWindowLongPtrA(DrawData.Dx.Window, GWLP_WNDPROC, (LONG_PTR)DrawData.Dx.oWndProc);
 
-	Modules::CVarSpoofer.RestoreVars();
+	//Modules::CVarSpoofer.RestoreVars();
 
 	if (consoleStream) fclose(consoleStream);
 	FreeConsole();

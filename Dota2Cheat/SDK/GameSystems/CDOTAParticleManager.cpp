@@ -1,4 +1,5 @@
 #include "CDOTAParticleManager.h"
+#include "../Base/Logging.h"
 
 ParticleWrapper CDOTAParticleManager::CreateParticle(const char* name, ParticleAttachment_t attachType, CBaseEntity* ent) {
 	CreateParticleInfo info{};
@@ -6,26 +7,34 @@ ParticleWrapper CDOTAParticleManager::CreateParticle(const char* name, ParticleA
 	info.m_particleAttachment = attachType;
 	info.m_pTargetEntity = ent;
 
-	CallVFunc<VTableIndexes::CDOTAParticleManager::CreateParticle>(GetHandle(), &info);
+	uint32_t& handle = Handle();
+
+	if ((handle < (1 << 24)) || handle - (1 << 24) > 10000) ONLY_ONCE{
+		LogFE("{}: {}!", __FUNCTION__, "broken handle offset likely");
+	}
+
+	GetVFunc(VMI::CDOTAParticleManager::CreateParticle).Call<void, uint32_t>(handle, &info);
 	auto container = GetParticles().last();
 	ParticleWrapper result{};
 	result.info = info;
 	result.particle = container->GetParticle();
-	result.handle = GetHandle()++;
+	result.handle = handle;
 
+	handle += 1;
+	
 	particles.push_back(result);
 
 	return result;
 }
 
 void CDOTAParticleManager::DestroyParticle(uint32_t handle) {
-	DestroyParticleFunc(this, handle, 1);
+	DestroyParticleFunc(this, handle, false, true);
 }
 
 void CDOTAParticleManager::DestroyParticle(ParticleWrapper& particleWrap) {
 	if (!HVALID(particleWrap.handle))
 		return;
-	DestroyParticleFunc(this, particleWrap.handle, 1);
+	DestroyParticleFunc(this, particleWrap.handle, false, true);
 	particleWrap.Invalidate();
 }
 

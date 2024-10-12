@@ -1,7 +1,7 @@
 #pragma once
 #include "../SDK/Base/Vector.h"
 #include <fstream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 namespace Config {
 	class ConfigManager {
@@ -12,14 +12,15 @@ namespace Config {
 			UINT_64,
 			FLOAT,
 			VECTOR2D,
-			VECTOR3D
+			VECTOR3D,
+			STRING
 		};
 		struct ConfigVar {
 			void* val;
 			ConfigVarType type;
 		};
-		std::unordered_map<std::string, ConfigVar> vars;
 
+		std::unordered_map<std::string, ConfigVar> vars;
 
 		template<typename T>
 		void AddVar(ConfigVarType type, T* var, T value, const std::string& name) {
@@ -40,14 +41,16 @@ namespace Config {
 			CFGVAR_INFER(Vector, ConfigVarType::VECTOR3D);
 			CFGVAR_INFER(Vector2D, ConfigVarType::VECTOR2D);
 			CFGVAR_INFER(uint64_t, ConfigVarType::UINT_64);
+			CFGVAR_INFER(std::string, ConfigVarType::STRING);
 		}
 
 #undef CFGVAR_INFER
 
-		void SaveConfig(std::ofstream& stream);
-		void LoadConfig(std::ifstream& stream);
+		void SaveToFile(std::ofstream& stream);
+		void LoadFromFile(std::ifstream& stream);
 		void SaveEquippedItems(std::ofstream& stream);;
 		void LoadEquippedItems(std::ifstream& stream);;
+
 		nlohmann::json* GetJsonEntryFromCfgVar(nlohmann::json& data, const std::string& name) {
 			using json = nlohmann::json;
 			const static std::string delimiter = "::";
@@ -78,6 +81,9 @@ namespace Config {
 
 	namespace AbilityESP {
 		inline bool Enabled;
+
+		inline bool ApplyIconModifiers;
+
 		inline bool ShowAllies;
 		inline float UIScale;
 		inline int Rounding;
@@ -87,7 +93,6 @@ namespace Config {
 	}
 
 	namespace Bars {
-		inline bool ManaBars;
 		inline bool HPNumbers;
 	}
 
@@ -136,6 +141,7 @@ namespace Config {
 		inline bool TargetedSpells;
 		inline bool TrueSight;
 		inline bool LinkenSphere;
+		inline bool MirrorShield;
 	}
 
 	namespace Changer {
@@ -180,6 +186,13 @@ namespace Config {
 		inline Vector Color;
 	}
 
+	inline std::string Locale;
+
 	inline int CircleRadius;
 	inline Vector CircleRGB;
+
+	// Debug config, does not get saved
+	namespace Debug {
+		inline bool LogFilterMessages = false;
+	}
 }

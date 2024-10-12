@@ -5,7 +5,7 @@ void Modules::M_LastHitMarker::DrawCircleFor(CDOTABaseNPC* creep) {
 		ImColor{ 0,255,0 } :
 		ImColor{ 255,0,0 };
 	float radius = 10 * (1200 / Config::CameraDistance * 1.2);
-	ImGui::GetForegroundDrawList()->AddCircleFilled(WorldToScreen(creep->GetHealthBarPos()), radius, color);
+	ImGui::GetBackgroundDrawList()->AddCircleFilled(WorldToScreen(creep->GetHealthBarPos()), radius, color);
 }
 
 void Modules::M_LastHitMarker::Draw() {
@@ -18,10 +18,16 @@ void Modules::M_LastHitMarker::Draw() {
 
 	auto attackRange = ctx.localHero->GetAttackRange();
 	const auto DrawForCreep = [this, hasQBlade, attackRange](const auto& wrapper) {
+		if (
+			wrapper.creepType != CreepType::LaneMelee
+			&& wrapper.creepType != CreepType::LaneRanged
+			&& wrapper.creepType != CreepType::Siege
+			)
+			return;
 
 		auto creep = wrapper.As<CDOTABaseNPC>();
-		if (!IsValidReadPtr(creep)
-			|| !IsValidReadPtr(creep->GetIdentity())
+		if (!creep
+			|| !creep->GetIdentity()
 			|| !creep->IsTargetable())
 			return;
 

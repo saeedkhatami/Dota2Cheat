@@ -1,7 +1,7 @@
 #pragma once
 
 #include "INetChannel.h"
-#include "../../Protobufs/networkbasetypes.pb.h"
+#include <networkbasetypes.pb.h>
 
 struct CGlobalVars;
 
@@ -82,7 +82,6 @@ public:
 	virtual bool IsConnected(void) = 0;
 	virtual bool IsConnecting(void) = 0;
 	virtual bool IsPaused(void) = 0;
-	virtual bool IsSomething(void) = 0; // added Dec 2018
 	virtual bool IsInGame(void) = 0;
 	virtual bool IsBackgroundMap(void) = 0;
 	virtual int GetMaxClients(void) = 0;
@@ -107,7 +106,7 @@ public:
 	virtual void SplitScreenConnect(int splitScreenSlot) = 0;
 	virtual int GetMaxSplitScreenPlayers(void) = 0;
 	virtual void* GetViewEntity(void) = 0;
-	virtual INetChannel* GetNetChannel(int splitScreenSlot = 0) = 0;
+	//virtual INetChannel* GetNetChannel(int splitScreenSlot = 0) = 0;
 	virtual void UpdateAudioState(AudioState_t*, int splitScreenSlot) = 0;
 	virtual void ClockDrift_AdjustFrameTime(float) = 0;
 	virtual float GetTickInterval(void) = 0;
@@ -197,8 +196,11 @@ public:
 	virtual void CL_ClearState(bool) = 0;
 	virtual void OnSwitchLoopModeFinished(const char*, unsigned int, bool) = 0;
 
-	// 2 funcs below xrefs: "CL:  Loading groups %d\n", "%s:  Entity Group loaded\n"
-	uint32_t GetLocalPlayerID(int splitscreenSlot = 0) {
-		return *(uint32_t*)((uintptr_t)this + 24 * (splitscreenSlot * 10));
+	uint32_t GetLocalPlayerID(int splitscreenSlot = 0) const {
+		uint32_t res = 0;
+		((VClass*)this)->GetVFunc(VMI::CNetworkGameClient::GetLocalPlayer)(&res, splitscreenSlot);
+		return res;
 	}
+
+	INetChannel* GetNetChannel(uint32_t splitscreenSlot = 0) const;
 };

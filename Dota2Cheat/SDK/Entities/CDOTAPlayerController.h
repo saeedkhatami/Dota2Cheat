@@ -1,7 +1,7 @@
 #pragma once
 #include "../Base/CUtlVector.h"
 #include "../Enums.h"
-#include "../Protobufs/dota_commonmessages.pb.h"
+#include <dota_commonmessages.pb.h>
 
 #include "CDOTABaseNPCHero.h"
 
@@ -38,7 +38,7 @@ class CDOTAPlayerController : public CBaseEntity {
 public:
 	GETTER(CHandle<CDOTABaseNPC_Hero>, GetAssignedHeroHandle, Netvars::C_DOTAPlayerController::m_hAssignedHero);
 
-	auto GetAssignedHero() {
+	auto GetAssignedHero() const {
 		return GetAssignedHeroHandle().Entity();
 	}
 

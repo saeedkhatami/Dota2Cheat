@@ -48,7 +48,7 @@ void Modules::SkinChanger::Equip(CEconItem* pItem, uint16_t unClass, uint16_t un
 	SOUpdated(pItem);
 }
 CEconItem* Modules::SkinChanger::CreateItem(uint32_t unDefIndex) {
-	static auto inv = Interfaces::GCClient->GetSOListeners()[1];
+	static auto inv = CGCClient::Get()->GetSOListeners()[1];
 	static auto soid = inv->GetSOCache()->GetOwner();
 	const uint32_t accId = soid.m_unSteamID;
 	auto item = Signatures::CreateEconItem();
@@ -64,7 +64,7 @@ CEconItem* Modules::SkinChanger::CreateItem(uint32_t unDefIndex) {
 	return item;
 }
 bool Modules::SkinChanger::AddItem(uint32_t unDefIndex) {
-	static auto inv = Interfaces::GCClient->GetSOListeners()[1];
+	static auto inv = CGCClient::Get()->GetSOListeners()[1];
 	static auto soid = inv->GetSOCache()->GetOwner();
 	const uint32_t accId = soid.m_unSteamID;
 	auto item = Signatures::CreateEconItem();
@@ -77,7 +77,7 @@ bool Modules::SkinChanger::AddItem(uint32_t unDefIndex) {
 	proto.set_origin(kEconItemOrigin_Earned);
 	item->DeserializeFromProtobufItem(&proto);
 
-	LogF(LP_INFO, "Created item with ID {}", proto.id());
+	LogFI("Created item with ID {}", proto.id());
 
 	// UnlockAllStyles(item);
 

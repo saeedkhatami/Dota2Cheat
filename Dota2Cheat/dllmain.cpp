@@ -1,78 +1,98 @@
-#pragma once
-#include "CheatSDK/Hooking.h"
-
-#include "DebugFunctions.h"
-
-#include "Utils/Drawing.h"
+#pragma once	
 
 #include "CheatSDK/include.h"
-#include "CheatSDK/VTexDecoders/VTexParser.h"
+#include "CheatSDK/Hooking.h"
+#include "CheatSDK/Debug.h"
 #include "CheatSDK/MatchStateHandling.h"
 
 #include "UI/Pages/MainMenu.h"
-#include "UI/Pages/AutoPickSelectionGrid.h"
+#include <dota_usercmd.pb.h>
+#include <netmessages.pb.h>
 
-//struct piss {
-//	const char** netvar;
-//	CBaseEntity* ent;
-//	void* writeAddr;
-//	PAD(0X10);
-//	void* idk;
-//};
-//
-//struct shit {
-//	CBaseEntity* ent;
-//	PAD(16);
-//	piss* p; // 0x18
-//	PAD(0X10);
-//	int cbIndex;
-//};
-#define OFUNC(name) ((decltype(&hk##name))(o##name))
-//
-//void* oDecode{};
-//bool hkDecode(CFlattenedSerializer* thisptr, shit* s, int* val, void* idk2) {
-//	if (ctx.localHero)
-//		for (CBaseEntity* w : ((CDOTABaseNPC_Hero*)ctx.localHero)->Wearables()) {
-//			//if (s->ent == ctx.localHero) {
-//			if (w == s->p->ent) {
-//				std::lock_guard<std::mutex> lk(writeMutex);
-//				const char* name = *s->p->netvar;
-//				writes[name].lastVal = *val;
-//				writes[name].writeCount++;
-//			}
-//		}
-//
-//	return OFUNC(Decode)(thisptr, s, val, idk2);
-//}
+#include "../Modules/Hacks/DotaPlusUnlocker.h"
 
-void* oOnDemoHero;
-bool hkOnDemoHero(CDOTAGameRules* thisptr, int entIdx, CDOTAClientMsg_DemoHero* msg) {
-	//msg->mutable_item_defs()->Set(2, 6996);
-	return OFUNC(OnDemoHero)(thisptr, entIdx, msg);
+static const char* GetWinAPIExceptionName(ULONG code) {
+	switch (code) {
+		CASE_STRING(STILL_ACTIVE);
+		CASE_STRING(EXCEPTION_ACCESS_VIOLATION);
+		CASE_STRING(EXCEPTION_DATATYPE_MISALIGNMENT);
+		CASE_STRING(EXCEPTION_BREAKPOINT);
+		CASE_STRING(EXCEPTION_SINGLE_STEP);
+		CASE_STRING(EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
+		CASE_STRING(EXCEPTION_FLT_DENORMAL_OPERAND);
+		CASE_STRING(EXCEPTION_FLT_DIVIDE_BY_ZERO);
+		CASE_STRING(EXCEPTION_FLT_INEXACT_RESULT);
+		CASE_STRING(EXCEPTION_FLT_INVALID_OPERATION);
+		CASE_STRING(EXCEPTION_FLT_OVERFLOW);
+		CASE_STRING(EXCEPTION_FLT_STACK_CHECK);
+		CASE_STRING(EXCEPTION_FLT_UNDERFLOW);
+		CASE_STRING(EXCEPTION_INT_DIVIDE_BY_ZERO);
+		CASE_STRING(EXCEPTION_INT_OVERFLOW);
+		CASE_STRING(EXCEPTION_PRIV_INSTRUCTION);
+		CASE_STRING(EXCEPTION_IN_PAGE_ERROR);
+		CASE_STRING(EXCEPTION_ILLEGAL_INSTRUCTION);
+		CASE_STRING(EXCEPTION_NONCONTINUABLE_EXCEPTION);
+		CASE_STRING(EXCEPTION_STACK_OVERFLOW);
+		CASE_STRING(EXCEPTION_INVALID_DISPOSITION);
+		CASE_STRING(EXCEPTION_GUARD_PAGE);
+		CASE_STRING(EXCEPTION_INVALID_HANDLE);
+		CASE_STRING(CONTROL_C_EXIT);
+	}
+	return nullptr;
+}
+
+extern void InGameLogic();
+
+static LONG NTAPI VEH(PEXCEPTION_POINTERS pExceptionInfo) {
+	DWORD exceptionCode = pExceptionInfo->ExceptionRecord->ExceptionCode;
+	PVOID exceptionAddress = pExceptionInfo->ExceptionRecord->ExceptionAddress;
+
+	CONTEXT* ctx = pExceptionInfo->ContextRecord;
+	DWORD64 rax = ctx->Rax;
+	DWORD64 rbx = ctx->Rbx;
+	DWORD64 rcx = ctx->Rcx;
+	DWORD64 rdx = ctx->Rdx;
+	DWORD64 rsi = ctx->Rsi;
+	DWORD64 rdi = ctx->Rdi;
+	DWORD64 rbp = ctx->Rbp;
+	DWORD64 rsp = ctx->Rsp;
+
+	std::ostringstream oss;
+	oss << std::format("{} (0x{:X}) at {}", GetWinAPIExceptionName(exceptionCode), exceptionCode, exceptionAddress) << "\n";
+
+	oss << "RAX: 0x" << std::hex << rax << "\n";
+	oss << "RBX: 0x" << std::hex << rbx << "\n";
+	oss << "RCX: 0x" << std::hex << rcx << "\n";
+	oss << "RDX: 0x" << std::hex << rdx << "\n";
+	oss << "RSI: 0x" << std::hex << rsi << "\n";
+	oss << "RDI: 0x" << std::hex << rdi << "\n";
+	oss << "RBP: 0x" << std::hex << rbp << "\n";
+	oss << "RSP: 0x" << std::hex << rsp << "\n";
+
+	oss << "\nCheck the console window for anything that might tell you why this happened. Screenshot any errors in case you want to report them!";
+
+	std::string message = oss.str();
+
+	MessageBoxA(NULL, message.c_str(), "Dota2Cheat", MB_OK | MB_ICONERROR);
+
+	return EXCEPTION_CONTINUE_SEARCH;
 }
 
 void HackThread(HMODULE hModule) {
-	// Initialize MinHook.
-	if (MH_Initialize() != MH_OK)
-		FreeLibraryAndExitThread(hModule, 0);
-
-	Modules::SkinChanger.DeleteSOCacheFiles();
+#ifndef _DEBUG
+	AddVectoredExceptionHandler(1, VEH);
+#endif
 
 	d2c.Initialize(hModule);
-	//{
-	//	auto Decode = Memory::Scan("E8 ? ? ? ? 44 0F B6 BD ? ? ? ? 44 22 F8 44 88 BD ? ? ? ? E9", "networksystem.dll").GetAbsoluteAddress(1);
-	//	HOOKFUNC(Decode);
-	//}
-	//{
-	//	auto OnDemoHero = Memory::Scan("48 89 4C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 8B 05 ? ? ? ? ",
-	//		"client.dll");
-	//	HOOKFUNC(OnDemoHero);
-	//}
 
 	MatchStateManager.CheckForOngoingGame();
 
 	while (!d2c.shouldUnload)
 		Sleep(10);
+
+#ifndef _DEBUG
+	RemoveVectoredExceptionHandler(VEH);
+#endif
 
 	d2c.Unload();
 }
