@@ -279,6 +279,7 @@
   <ItemGroup>
     <None Include=".editorconfig" />
     <None Include="vcpkg.json" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="CheatSDK\Shaders\Greyscale.hlsl" />

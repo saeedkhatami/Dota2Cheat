@@ -80,7 +80,11 @@ template<typename ...Args>
 void LogF(LogPrefix prefixType, std::string_view fmtString, Args&&... args) {
 	std::lock_guard<std::mutex> lk(mLogging);
 	SetLogColor(prefixType);
+<<<<<<< Updated upstream
 	std::cout << GetLogPrefix(prefixType) << std::vformat(fmtString, std::make_format_args(args...)) << std::endl;
+=======
+	// std::cout << GetLogPrefix(prefixType) << std::vformat(fmtString, std::make_format_args(std::forward<Args>(args)...)) << std::endl;
+>>>>>>> Stashed changes
 	SetConsoleColor();
 }
 
