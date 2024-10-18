@@ -20,7 +20,7 @@ bool Hooks::hkPrepareUnitOrders(CDOTAPlayerController* player, dotaunitorder_t o
 		}
 	}
 
-	if (!issuer || issuer->GetLifeState() != 0)
+	if (!issuer || !issuer->IsAlive())
 		return oPrepareUnitOrders(player, orderType, targetIndex, position, abilityIndex, orderIssuer, issuer, queue, showEffects);
 
 	switch (orderType) {
@@ -44,7 +44,7 @@ bool Hooks::hkPrepareUnitOrders(CDOTAPlayerController* player, dotaunitorder_t o
 		orderType == DOTA_UNIT_ORDER_CAST_TARGET)
 		if (Modules::BadCastPrevention.IsBadCast(orderType, targetIndex, position, abilityIndex, issuer)) {
 			ShowHUDError("Bad cast: no targets!", "General.CastFail_NoTarget");
-			return oPrepareUnitOrders(player, orderType, targetIndex, position, abilityIndex, orderIssuer, issuer, queue, showEffects);
+			return false;
 		}
 
 	if (giveOrder)

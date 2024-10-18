@@ -8,26 +8,6 @@
 #include <google/protobuf/message.h>
 #include <dota_gcmessages_msgid.pb.h>
 
-template<typename T = google::protobuf::Message>
-class CProtobufMsgBase : public VClass {
-private:
-	void* unk;
-public:
-	google::protobuf::Message* header;
-	EDOTAGCMsg msgID;
-	T* msg;
-};
-
-class IMsgNetPacket : public VClass {
-public:
-	GETTER(EDOTAGCMsg, GetEMsg, 0x78);
-};
-
-class CProtobufSharedObjectBase : public VClass {
-public:
-	VGETTER(google::protobuf::Message*, GetPObject, 9);
-};
-
 class CGCClientSharedObjectTypeCache : public VClass {
 public:
 	CProtobufSharedObjectBase* GetProtobufSO() const {
@@ -50,7 +30,7 @@ public:
 class CGCClient : public VClass {
 public:
 	GETTER(CUtlVector<ISharedObjectListener*>, GetSOListeners, 0x270);
-	IGETTER(CDOTAGCClientLobbyManager, GetLobbyManager, 0x6c8);
+	IGETTER(CDOTAGCClientLobbyManager, GetLobbyManager, 0x700);
 
 	void DispatchSOUpdated(SOID_t soid, void* sharedObj, ESOCacheEvent ev) {
 		auto listeners = GetSOListeners();
@@ -58,8 +38,13 @@ public:
 			listener->SOUpdated(&soid, sharedObj, ev);
 	}
 
+	// via xrefs "ui.matchmaking_accept" or "ui.matchmaking_cancel" find CDOTAGCClientSystem::SendReadyUpMessageForCurrentLobby
+	// in there you will see all of the required components in this order:
+	// finds CDOTALobby* in lobby manager
+	// gets 32bit SteamID
+	// gets lobby id from lobby
 	uint64_t GetReadyUpKey() const {
-		auto lobbyId = ~GetLobbyManager()->FindLobby()->GetLobbyId();
+		auto lobbyId = ~GetLobbyManager()->FindLobby()->GetSOLobby()->lobby_id();
 		uint32_t accId = GetSOListeners()[1]->GetSOCache()->GetOwner().m_unSteamID;
 		return lobbyId ^ (accId | ((uint64_t)accId << 32));
 	}
