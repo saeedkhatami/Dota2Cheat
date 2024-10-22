@@ -119,7 +119,6 @@ void CCheatManager::LoadFiles() {
 }
 
 void CCheatManager::Initialize(HMODULE hModule) {
-	// Initialize MinHook.
 	if (MH_Initialize() != MH_OK)
 		FreeLibrary(hModule);
 

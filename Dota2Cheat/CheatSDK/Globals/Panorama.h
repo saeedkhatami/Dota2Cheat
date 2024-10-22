@@ -1,8 +1,5 @@
 #pragma once
-// #include "Panorama/CPanel2D.h"
-// #include "Panorama/CUIPanel.h"
 #include <Dota2SDK.h>
-// #include "Interfaces.h"
 
 namespace Panorama {
 	inline CDOTA_Hud* DotaHud{};

@@ -1,5 +1,4 @@
 #pragma once
-// #include "../pch.h"
 #include <Dota2SDK.h>
 
 // Centralized storage for data about heroes

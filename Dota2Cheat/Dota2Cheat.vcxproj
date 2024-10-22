@@ -19,7 +19,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{31159cb4-c0b0-4e13-9afe-f3088805c3a6}</ProjectGuid>
     <RootNamespace>Dota2Cheat</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -99,12 +99,13 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;$(ProjectDir);$(ProjectDir)include;$(SolutionDir)Dota2Proto\src;$(ProjectDir)SDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)Dota2Proto\src;$(ProjectDir)SDK;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>false</ExceptionHandling>
       <AdditionalOptions>/bigobj /FI"pch.h"</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4244; 4267; 4005; 4018</DisableSpecificWarnings>
+      <ForcedIncludeFiles>pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -112,7 +113,7 @@
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalDependencies>libMinHook.x64.lib;d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib;$(ProjectDir)lib\;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\;</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>MSVCRT.LIB; %(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -133,6 +134,7 @@
       <AdditionalOptions>/bigobj /FI"pch.h"</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4244; 4267; 4005; 4018</DisableSpecificWarnings>
+      <ForcedIncludeFiles>pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,12 +158,13 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;$(ProjectDir)include;$(SolutionDir)Dota2Proto\src;$(ProjectDir)SDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)Dota2Proto\src;$(ProjectDir)SDK;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/bigobj /FI"pch.h"</AdditionalOptions>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <DisableSpecificWarnings>4244; 4267; 4005; 4018</DisableSpecificWarnings>
+      <ForcedIncludeFiles>pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -170,14 +173,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>libMinHook.x64.lib;d3d11.lib;libprotobuf.lib;libprotobuf-lite.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib;$(ProjectDir)lib\;C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libMinHook.x64.lib;d3d11.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>MSVCRT.LIB;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CheatSDK\Data\EntityList.cpp" />
-    <ClCompile Include="CheatSDK\Exports.cpp" />
     <ClCompile Include="CheatSDK\GameEventListeners\dota_player_update_assigned_hero.cpp" />
     <ClCompile Include="CheatSDK\Globals\SignatureDB.cpp" />
     <ClCompile Include="CheatSDK\Globals\VMTDB.cpp" />
@@ -258,8 +260,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Testing|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="CheatSDK\Globals\GameSystemSingletonImpl.cpp" />
-    <ClCompile Include="CheatSDK\Globals\InterfaceSingletonImpl.cpp" />
+    <ClCompile Include="CheatSDK\SingletonImplGameSystems.cpp" />
+    <ClCompile Include="CheatSDK\SingletonImplInterfaces.cpp" />
     <ClCompile Include="SDK\Interfaces\CVarSystem.cpp" />
     <ClCompile Include="SDK\Interfaces\GC\CDOTAGCLobbyManager.cpp" />
     <ClCompile Include="SDK\Interfaces\Network\CNetworkGameClient.cpp" />
@@ -271,8 +273,6 @@
     <ClCompile Include="Utils\Drawing.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CheatSDK\Aliases.h" />
-    <ClInclude Include="CheatSDK\Exports.h" />
     <ClInclude Include="CheatSDK\GameEventListeners\dota_on_hero_finish_spawn.h" />
     <ClInclude Include="CheatSDK\GameEventListeners\event_func.h" />
     <ClInclude Include="CheatSDK\GameEventListeners\game_rules_state_change.h" />
@@ -369,7 +369,7 @@
     <ClInclude Include="SDK\GameSystems\CGameParticleManagerSystem.h" />
     <ClInclude Include="SDK\GameSystems\CRenderGameSystem.h" />
     <ClInclude Include="CheatSDK\Data\EntityList.h" />
-    <ClInclude Include="SDK\include.h" />
+    <ClInclude Include="SDK\Dota2SDK.h" />
     <ClInclude Include="SDK\Interfaces\CEngineServiceMgr.h" />
     <ClInclude Include="SDK\Interfaces\CFlattenedSerializers.h" />
     <ClInclude Include="SDK\Interfaces\CGameUI.h" />
@@ -457,7 +457,6 @@
     <ClInclude Include="Modules\Hacks\LinearProjectileWarner.h" />
     <ClInclude Include="Hooks\Network.h" />
     <ClInclude Include="Hooks\ModifierEvents.h" />
-    <ClInclude Include="CheatSDK\Globals\Interfaces.h" />
     <ClInclude Include="SDK\Interfaces\Network\bf_read.h" />
     <ClInclude Include="SDK\Interfaces\Network\bf_write.h" />
     <ClInclude Include="SDK\Interfaces\Network\CNetworkMessages.h" />
@@ -490,7 +489,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
-    <None Include="packages.config" />
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
@@ -571,12 +569,5 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets'))" />
-  </Target>
 </Project>
