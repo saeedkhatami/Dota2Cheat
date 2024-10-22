@@ -1,5 +1,5 @@
 #pragma once
-#include "../../pch.h"
+// #include "../../pch.h"
 #include "../../CheatSDK/include.h"
 #include "../Hacks/PerfectBlink.h"
 #include "../Hacks/CastRedirection.h"

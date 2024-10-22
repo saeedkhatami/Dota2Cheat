@@ -1,5 +1,5 @@
 #pragma once
-#include "../../pch.h"
+// #include "../../pch.h"
 #include "../../CheatSDK/include.h"
 #include <dota_gcmessages_client.pb.h>
 

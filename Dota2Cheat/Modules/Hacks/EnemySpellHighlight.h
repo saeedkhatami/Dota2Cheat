@@ -1,5 +1,5 @@
 #pragma once
-#include "../../pch.h"
+// #include "../../pch.h"
 #include "../../CheatSDK/Config.h"
 #include "../Utility/ParticleGC.h"
 

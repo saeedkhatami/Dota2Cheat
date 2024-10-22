@@ -1,6 +1,7 @@
 #pragma once
-#include "../../pch.h"
-#include "../../CheatSDK/include.h"
+#include <Dota2SDK.h>
+// #include "../../pch.h"
+// #include "../../CheatSDK/include.h"
 #include "../../Utils/Drawing.h"
 #include "MultiThreadModule.h"
 #include "../MListeners.h"

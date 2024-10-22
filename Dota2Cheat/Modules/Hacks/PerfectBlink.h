@@ -1,6 +1,7 @@
 #pragma once
-#include "../../pch.h"
+// #include "../../pch.h"
 #include "../../CheatSDK/Config.h"
+#include <Dota2SDK.h>
 
 namespace Modules {
 	// Bypasses Blink Dagger's overshoot mechanic

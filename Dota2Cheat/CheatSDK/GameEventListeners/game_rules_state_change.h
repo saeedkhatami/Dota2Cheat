@@ -1,10 +1,10 @@
 #pragma once
-#include "../pch.h"
+// #include "../pch.h"
 #include "../MatchStateHandling.h"
 #include <GameSystems/CGameEventManager.h>
 #include <GameSystems/C_DOTAGameRules.h>
 
-#include "../Aliases.h"
+// #include "../Aliases.h"
 
 // CDOTAGameRules::m_nGameState change
 

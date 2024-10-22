@@ -1,5 +1,5 @@
 #pragma once
-#include "../pch.h"
+// #include "../pch.h"
 #include "../GameEventListeners/dota_player_update_assigned_hero.h"
 #include "../GameEventListeners/dota_on_hero_finish_spawn.h"
 #include "../GameEventListeners/map_shutdown.h"
@@ -8,7 +8,7 @@
 #include "../GameEventListeners/dota_game_state_change.h"
 #include "../GameEventListeners/lobby_updated.h"
 
-#include "../Aliases.h"
+// #include "../Aliases.h"
 
 // Wrapper for CGameEventManager
 inline class CEventManager {
